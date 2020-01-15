@@ -62,7 +62,11 @@ switch reg
     case 'turkey',     region=5; 
 end
 
-HW    = sign(Rx);
+if all(Rx==999)
+    HW = zeros(size(Rx));
+else
+    HW    = sign(Rx);
+end
 d_DPP = 0; % for median calculatio, d_DPP=0.
 
 % Compute lnSa and sigma with user-defined period
@@ -204,7 +208,7 @@ else
     E_Ztor = (max(2.673-1.136.*max(M-4.970,0),0)).^2;
 end
 
-if Ztor == 999
+if all(Ztor == 999)
     Ztor = E_Ztor;
 end
 
@@ -226,7 +230,7 @@ end
 if Z10 ==999
     d_Z1 = 0;
 else
-    d_Z1=Z10.*1000-z_1;
+    d_Z1=Z10.*1000-z_1; % ojo aca, Z10 se ingresa en km, internamente se convierte a m
 end
 
 % Dip term
