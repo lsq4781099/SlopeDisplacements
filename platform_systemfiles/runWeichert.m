@@ -1,9 +1,8 @@
-function param = runWeichert(param,source,cat)
+function param = runWeichert(FDLIM,FX,FY,cat)
 
-FX=source.vertices([1:end,1],2)';
-FY=source.vertices([1:end,1],1)';
-FDsup = param.FDsup;
-FDinf = param.FDinf;
+
+FDsup = FDLIM(1);
+FDinf = FDLIM(2);
 Fuente = polygon(FDsup,FDinf,{FX},{FY},cat.data.db);
 
 Mag    = Fuente(:,6);
@@ -23,7 +22,8 @@ param.Mmin      = mmin;
 param.Mmax      = mmax;
 param.NMmin     = a_value;
 param.bvalue    = b_value;
-param.sigma     = [sigma_a,sigma_b];
+param.sigma_a   = sigma_a;
+param.sigma_b   = sigma_b;
 
 
 function b = polygon(FDsup,FDinf,FX,FY,Catalog)

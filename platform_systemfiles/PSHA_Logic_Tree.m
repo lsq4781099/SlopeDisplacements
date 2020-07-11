@@ -18,26 +18,29 @@ end
 
 function PSHA_Logic_Tree_OpeningFcn(hObject, eventdata, handles, varargin) %#ok<*INUSL>
 
-sys= varargin{1};
-handles.sys = sys;
+branch= varargin{1};
+weight= varargin{2};
+gmmid = varargin{3};
+
+handles.branch = branch;
+handles.weight = weight;
 
 % seismic hazard
-id1 = {sys.GEOM.id};
-W1  = unique([sys.BRANCH(:,1),sys.WEIGHT(:,1)],'rows');
+W1  = unique([branch(:,1),weight(:,1)],'rows');
+ngeom = size(W1,1);
 W1  = num2cell(W1(:,2));
-handles.table1.Data=[id1(:),W1];
+handles.table1.Data=[compose('Geometry %g',1:ngeom)',W1];
 
 % GMM
-id2 = {sys.GMPE.id};
-W2  = unique([sys.BRANCH(:,2),sys.WEIGHT(:,2)],'rows');
+[W2,B] = unique([branch(:,2),weight(:,2)],'rows');
 W2  = num2cell(W2(:,2));
-handles.table2.Data=[id2(:),W2];
+handles.table2.Data=[gmmid(B),W2];
 
 % MR
-id3 = {sys.MSCL.id};
-W3  = unique([sys.BRANCH(:,3),sys.WEIGHT(:,3)],'rows');
+W3  = unique([branch(:,3),weight(:,3)],'rows');
+nmscl = size(W3,1);
 W3  = num2cell(W3(:,2));
-handles.table3.Data=[id3(:),W3];
+handles.table3.Data=[compose('MR %g',1:nmscl),W3];
 % 
 
 handles.current1=zeros(0,2);
@@ -50,16 +53,16 @@ handles.ax1.Box='on';
 handles.ax1.XLim=[0 9];
 handles.ax1.YLim=[-1.1 1.3];
 handles.ax1.NextPlot='add';
-text(handles.ax1,2,1.3,'Seismic Source','horizontalalignment','right')
-text(handles.ax1,4.5,1.3,'GMM','horizontalalignment','right')
-text(handles.ax1,7,1.3,'MR','horizontalalignment','right')
+text(handles.ax1,0,1.3,'Seismic Source','horizontalalignment','left','fontsize',9)
+text(handles.ax1,3,1.3,'GMM','horizontalalignment','left','fontsize',9)
+text(handles.ax1,6,1.3,'Magnitude Recurrence','horizontalalignment','left','fontsize',9)
 plotPSHALogicTree(handles);
 guidata(hObject, handles);
 uiwait(handles.figure1);
 
 function varargout = PSHA_Logic_Tree_OutputFcn(hObject, eventdata, handles)
 
-branch = handles.sys.BRANCH;
+branch = handles.branch;
 geom_weight=cell2mat(handles.table1.Data(:,2));
 gmpe_weight=cell2mat(handles.table2.Data(:,2));
 mscl_weight=cell2mat(handles.table3.Data(:,2));
@@ -67,8 +70,9 @@ weight = [
     geom_weight(branch(:,1)),...
     gmpe_weight(branch(:,2)),...
     mscl_weight(branch(:,3))];
-handles.sys.WEIGHT= [weight,prod(weight,2)];
-varargout{1}=handles.sys;
+branch(:,4:6)= weight;
+branch(:,7)  = prod(weight,2);
+varargout{1}=branch;
 delete(handles.figure1)
 
 function plotPSHALogicTree(handles)

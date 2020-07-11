@@ -21,29 +21,28 @@ handles.ExitButton.CData = double(imread('exit.jpg'))/255;
 handles.gridbutton.CData = double(imread('Grid.jpg'))/255;
 handles.undock.CData      = double(imread('Undock.jpg'))/255;
 handles.sys    = varargin{1};
-handles.model  = varargin{2};
-handles.opt    = varargin{3};
-handles.h      = varargin{4};
+handles.opt    = varargin{2};
+handles.h      = varargin{3};
 
 % ------------ REMOVES PCE MODELS (AT LEAST FOR NOW) ----------------------
-handles.isREGULAR = find(horzcat(handles.model.isregular)==1);
-handles.isPCE     = find(horzcat(handles.model.isregular)==0);
-isREGULAR = handles.isREGULAR;
-handles.model = handles.model(isREGULAR); 
-[~,B]=setdiff(handles.sys.BRANCH(:,2),isREGULAR);
+isREG = handles.sys.isREG;
+[~,B]=setdiff(handles.sys.branch(:,2),isREG);
 if ~isempty(B)
-    handles.sys.BRANCH(B,:)=[];
-    handles.sys.WEIGHT(B,:)=[];
-    handles.sys.WEIGHT(:,4)=handles.sys.WEIGHT(:,4)/sum(handles.sys.WEIGHT(:,4));
+    handles.sys.branch(B,:)=[];
+    handles.sys.weight(B,:)=[];
+    handles.sys.weight(:,5)=handles.sys.weight(:,5)/sum(handles.sys.weight(:,5));
+    warndlg('PCE Models removed from logic tree. Logic Tree weights were normalized')
+    uiwait
 end
-% -------------------------------------------------------------------------
 
-handles.popbranch.String = {handles.model.id};
-handles.popsource.String = ['all sources',{handles.model(1).source.label}];
+% -------------------------------------------------------------------------
+Nmodels = size(handles.sys.branch,1);
+handles.popbranch.String = compose('Branch %i',1:Nmodels);
+handles.popsource.String = [{'all sources'};handles.sys.labelG{1}];
 handles.popsite.String   = handles.h.id;
 
 if numel(handles.opt.IM)==1
-    answer = inputdlg('Specify 2nd intensity measure','VPSHA',1,{'Sa(T=1)'});
+    answer = inputdlg('Specify 2nd intensity measure','VPSHA',1,{'SA(T=1)'});
     if isempty(answer)
         close(handles.figure1)
         return
@@ -54,8 +53,8 @@ end
 handles.popIM1.String    = IM2str(handles.opt.IM); handles.popIM1.Value=1;
 handles.popIM2.String    = IM2str(handles.opt.IM); handles.popIM2.Value=2;
 
-xlabel(handles.ax1,IM2str(handles.opt.IM(1)),'fontsize',10)
-ylabel(handles.ax1,IM2str(handles.opt.IM(end)),'fontsize',10)
+xlabel(handles.ax1,addIMunits(handles.opt.IM(1)),'fontsize',10)
+ylabel(handles.ax1,addIMunits(handles.opt.IM(end)),'fontsize',10)
 caxis([0 1])
 C=colorbar('peer',handles.ax1,'location','eastoutside','tag','cbar');
 set(get(C,'Title'),'String','MRE')
@@ -117,13 +116,15 @@ guidata(hObject,handles);
 
 function run2Bazurro_Callback(hObject, eventdata, handles)
 
-branch_ptr = handles.popbranch.Value;
+model_ptr  = handles.popbranch.Value;
 source_ptr = handles.popsource.Value;
 site_ptr   = handles.popsite.Value;
 IM_ptr     = [handles.popIM1.Value,handles.popIM2.Value];
+branch     = handles.sys.branch;
 
 if source_ptr ==1
-    source_ptr = 1:length(handles.model(branch_ptr).source);
+    Nsource    = sum(handles.sys.Nsrc(:,branch(model_ptr,1)));
+    source_ptr = 1:Nsource;
 else
     source_ptr = source_ptr-1;
 end
@@ -136,13 +137,17 @@ else
 end
 
 IM      = handles.opt.IM(IM_ptr);
-site    = handles.h.p(site_ptr,:);
+h.id    = handles.h.id(site_ptr,:);
+h.p     = handles.h.p(site_ptr,:);
+h.param = handles.h.param;
+h.value = handles.h.value(site_ptr,:);
+
 opt     = handles.opt;
-model   = handles.model(branch_ptr); model.source = model.source(source_ptr);
+sources = buildmodelin(handles.sys,branch(model_ptr,:),handles.opt);
+sources = sources(source_ptr);
 Nsource = length(source_ptr);
 rho     = str2double(handles.rho.String);
-Vs30    = handles.h.Vs30(site_ptr);
-[handles.lambda,handles.MRE,handles.MRD] = runhazardV1(im,IM,site,Vs30,opt,model,Nsource,rho);
+[handles.lambda,handles.MRE,handles.MRD] = runhazardV1(im,IM,h,opt,sources,Nsource,rho);
 
 handles.im = im;
 handles.IM = IM;

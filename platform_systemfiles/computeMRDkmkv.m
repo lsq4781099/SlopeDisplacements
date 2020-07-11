@@ -4,7 +4,7 @@ function [kvk,MRDkvkm] = computeMRDkmkv (Ts, Tm, im, MRD,rho)
 % close all
 % 
 % load mydata Ts Tm opt MRD
-PGVz    = im(:,1); kvmaxz  = PGVz;
+PGVz    = im(:,1)*100; kvmaxz  = PGVz;
 PGAz    = im(:,2); kmaxz   = PGAz;
 kvk     = im;
 sigk    = 0.25;

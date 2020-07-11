@@ -1,7 +1,7 @@
 function [haz]=FP2PH(handles)
 
 haz = handles.haz;
-w   = handles.sys.WEIGHT(:,4);
+w   = handles.sys.weight(:,5);
 % Hazard Curves
 if ~isempty(haz.lambda)
     for i=1:length(w)

@@ -23,8 +23,8 @@ function[zhyp]=dist_zhyp4(r0,rf,~,~,~,ellipsoid)
 if isempty(ellipsoid.Code)
     zhyp     = r0(:,3)-rf(:,3);
 else
-    gps0  = xyz2gps(r0,ellipsoid);
-    gpsf  = xyz2gps(rf,ellipsoid);
+    gps0  = xyz2gpsO(r0,ellipsoid);
+    gpsf  = xyz2gpsO(rf,ellipsoid);
     zhyp     = gps0(:,3)-gpsf(:,3);
 end
 

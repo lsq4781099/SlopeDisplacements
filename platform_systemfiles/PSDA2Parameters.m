@@ -25,6 +25,11 @@ if nargin==4
     handles.dmax.String   = sprintf('%g',iparam.d(end));
     handles.realSa.String = sprintf('%g',iparam.realSa);
     handles.realD.String  = sprintf('%g',iparam.realD);
+    
+    handles.kysamples.String = sprintf('%g',iparam.kysamples);
+    handles.Tssamples.String = sprintf('%g',iparam.Tssamples);
+    
+    
     handles.butt1.Value   = strcmp(iparam.optimize ,'on');
     handles.butt2.Value   = strcmp(iparam.optimize ,'off');
     handles.butt3.Value   = strcmp(iparam.imhazard ,'full');
@@ -66,7 +71,8 @@ switch handles.butt7.Value
     case 1, outparam.rng = 'shuffle';
     case 0, outparam.rng = 'default';
 end
-
+outparam.kysamples = str2double(handles.kysamples.String);
+outparam.Tssamples = str2double(handles.Tssamples.String);
 varargout{1}=outparam;
 delete(handles.figure1)
 
@@ -88,3 +94,7 @@ else
     delete(hObject);
 end
 % delete(hObject);
+
+function kysamples_Callback(hObject, eventdata, handles)
+
+function Tssamples_Callback(hObject, eventdata, handles)

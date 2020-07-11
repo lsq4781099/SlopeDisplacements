@@ -1,4 +1,4 @@
-function[rrup,x]=dist_rrup4(r0,rf,RW,RL,geom,ellipsoid)
+function[rrup,x]=dist_rrup4(r0,rf,RW,RL,geom)
 %------------------------------------------------------------------------
 % Rrup = Closest distance to the rupture plane
 % r0   = O(xyz) cordiantes of the site (km)
@@ -94,6 +94,6 @@ drup = sqrt(sum(drup.^2,2));
 rrup(~IND1)= drup(~IND1);
 
 % GPS location of closes point to site in the RA proyection 
-x = xyz2gps(bsxfun(@plus,pmean,x*rot'),ellipsoid);
+% x = xyz2gpsO(bsxfun(@plus,pmean,x*rot'),ellipsoid);
 
 

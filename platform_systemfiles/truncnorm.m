@@ -1,9 +1,9 @@
 function[mpdf,mcdf,meanMo]=truncnorm(m,param)
 
-Mmin    = param.Mmin;
-Mmax    = param.Mmax;
-Mchar   = param.Mchar;
-sigmaM  = param.sigmaM;
+Mmin    = param(1);
+Mmax    = param(2);
+Mchar   = param(3);
+sigmaM  = param(4);
 
 PHI  = normcdf([0,Mmin,Mmax],Mchar,sigmaM);
 mpdf = normpdf(m,Mchar,sigmaM)/(PHI(3)-PHI(2));

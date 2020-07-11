@@ -1,9 +1,9 @@
 function[mpdf,mcdf,meanMo]=truncexp(M,param)
 
-
-beta  = log(10)*param.bvalue;
-Mmin  = param.Mmin;
-Mmax  = param.Mmax;
+%param=[bvalue,Mmin,Mmax]
+beta  = log(10)*param(1);
+Mmin  = param(2);
+Mmax  = param(3);
 
 %PROBALILITY DENSITY FUNCTION
 mpdf = beta*exp(-beta*(M-Mmin))/(1-exp(-beta*(Mmax-Mmin)));

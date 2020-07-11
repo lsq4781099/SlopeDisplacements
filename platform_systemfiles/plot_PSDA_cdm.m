@@ -16,7 +16,7 @@ gris      = [0.76 0.76 0.76];
 if haz.L0
     lambdaCDM2 = nansum(handles.lambdaCDM(:,site_ptr,:,:,model_ptr),4);
     lambdaCDM2 = permute(lambdaCDM2,[1 3 2]);
-    lambdaCDM2(any(lambdaCDM2<0,2),:)=[];
+    lambdaCDM2(lambdaCDM2<0)=nan;
     notnan = true(size(lambdaCDM2,1),1);
     
     if haz.L4
@@ -30,6 +30,7 @@ if haz.L0
     % plot median
     yplot  = zeros(0,length(d));
     if haz.L1
+        lambdaCDM2(all(lambdaCDM2==0,2),:)=[];
         y = exp(nanmean(log(lambdaCDM2),1));
         plot(handles.ax1,d,y,'linewidth',2,'DisplayName','Median');
         yplot=[yplot;y];
@@ -63,7 +64,9 @@ if haz.R0
     lambdaCDM2 = permute(lambdaCDM2,[1 3 4 2]);
     lambdaCDM2(lambdaCDM2<0)=nan;
     
-    med = exp(nanmean(log(nansum(lambdaCDM2,3)),1));
+    aux = log(nansum(lambdaCDM2,3));
+    aux(isinf(aux))=nan;
+    med = exp(nanmean(aux,1));
     plot(handles.ax1,d,med,'color',[0 0.447 0.741],'linewidth',2,'DisplayName','Median');
     yplot  = med;
     
@@ -74,8 +77,9 @@ if haz.R0
         lam1 = exp(nanmean(log(lam1),1));
         lam1 = permute(lam1,[3 2 1]);
         
-        [~,B]=intersect({handles.modelcdm.id},handles.tableCDM.Data{model_ptr,1});
-        source_label = {handles.modelcdm(B).source.label};
+        hazard  = str2double(regexp(handles.tableCDM.Data{haz.mptr,2},'\,','split'));
+        geomptr = hazard(1);
+        source_label = handles.sys.labelG{geomptr};
         str = source_label(NOTZERO);
         handles.ax1.ColorOrderIndex=2;
         for jj=1:length(str)
@@ -89,38 +93,24 @@ if haz.R0
     end
     
     if haz.R2
-        [~,B]      = intersect({handles.modelcdm.id},handles.tableCDM.Data{model_ptr,1});
-        mechs      = {handles.modelcdm(B).source.mechanism};
-        m1         = strcmp(mechs,'system');
-        m2         = strcmp(mechs,'interface');
-        m3         = strcmp(mechs,'intraslab');
-        m4         = strcmp(mechs,'slab');
-        m5         = strcmp(mechs,'crustal');
-        m6         = strcmp(mechs,'shallowcrustal');
-        m7         = strcmp(mechs,'fault');
-        m8         = strcmp(mechs,'grid');
+        hazard  = str2double(regexp(handles.tableCDM.Data{haz.mptr,2},'\,','split'));
+        geomptr = hazard(1);
+        mechs   = handles.sys.mech{geomptr};
+        m1      = mechs==1; %interface
+        m2      = mechs==2; %intraslab
+        m3      = mechs==3; %crustal
         
         fix1 =log(nansum(lambdaCDM2(:,:,m1),3)); fix1(isinf(fix1))=nan;
         fix2 =log(nansum(lambdaCDM2(:,:,m2),3)); fix2(isinf(fix2))=nan;
         fix3 =log(nansum(lambdaCDM2(:,:,m3),3)); fix3(isinf(fix3))=nan;
-        fix4 =log(nansum(lambdaCDM2(:,:,m4),3)); fix4(isinf(fix4))=nan;
-        fix5 =log(nansum(lambdaCDM2(:,:,m5),3)); fix5(isinf(fix5))=nan;
-        fix6 =log(nansum(lambdaCDM2(:,:,m6),3)); fix6(isinf(fix6))=nan;
-        fix7 =log(nansum(lambdaCDM2(:,:,m7),3)); fix7(isinf(fix7))=nan;
-        fix8 =log(nansum(lambdaCDM2(:,:,m8),3)); fix8(isinf(fix8))=nan;
-        
+       
         lam1 = [...
             exp(nanmean(fix1,1));...
             exp(nanmean(fix2,1));...
-            exp(nanmean(fix3,1));...
-            exp(nanmean(fix4,1));...
-            exp(nanmean(fix5,1));...
-            exp(nanmean(fix6,1));...
-            exp(nanmean(fix7,1));...
-            exp(nanmean(fix8,1))];
+            exp(nanmean(fix3,1))];
         NOTZERO = (nansum(lam1,2)>0);
         lam1  = lam1(NOTZERO,:);
-        mechs = {'system','interface','intraslab','slab','crustal','shallowcrustal','fault','grid'};
+        mechs = {'interface','intraslab','crustal'};
         str   = mechs(NOTZERO);
         handles.ax1.ColorOrderIndex=2;
         for jj=1:length(str)

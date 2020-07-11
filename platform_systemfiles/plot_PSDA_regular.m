@@ -86,8 +86,9 @@ if haz.R0
     
     if haz.R2 % displays source contribution
         haz_ptr      = handles.IJK(branch_ptr,1);
-        NOTZERO      = nansum(lambdaD,1)>-1;
-        source_label = {handles.model(haz_ptr).source.label};
+        geomptr      = handles.sys.branch(haz_ptr,1);
+        NOTZERO      = nansum(lambdaD,1)>0;
+        source_label = handles.sys.labelG{geomptr};
         str          = source_label(NOTZERO);
         lam1         = lambdaD(:,NOTZERO)';
         handles.ax1.ColorOrderIndex=1;
@@ -103,22 +104,19 @@ if haz.R0
     end
     
     if haz.R3 % displays mechanism contribution
-        model_ptr  = handles.IJK(branch_ptr,1);
-        mechs      = {handles.model(model_ptr).source.mechanism};
-        m1         = strcmp(mechs,'system');
-        m2         = strcmp(mechs,'interface');
-        m3         = strcmp(mechs,'intraslab');
-        m4         = strcmp(mechs,'slab');
-        m5         = strcmp(mechs,'crustal');
-        m6         = strcmp(mechs,'shallowcrustal');
-        m7         = strcmp(mechs,'fault');
-        m8         = strcmp(mechs,'grid');
-        lambdaD    = [nansum(lambdaD(:,m1),2) nansum(lambdaD(:,m2),2) nansum(lambdaD(:,m3),2) nansum(lambdaD(:,m4),2) nansum(lambdaD(:,m5),2) nansum(lambdaD(:,m6),2) nansum(lambdaD(:,m7),2) nansum(lambdaD(:,m8),2)];
+        haz_ptr    = handles.IJK(branch_ptr,1);
+        geomptr    = handles.sys.branch(haz_ptr,1);
+        mechs      = handles.sys.mech{geomptr};
+        m1         = (mechs==1); % interface
+        m2         = (mechs==2); % intraslab
+        m3         = (mechs==3); % crustal
+        
+        lambdaD    = [nansum(lambdaD(:,m1),2) nansum(lambdaD(:,m2),2) nansum(lambdaD(:,m3),2)];
         NOTNAN     = (nansum(lambdaD,1)>0);
         lam1       = lambdaD(:,NOTNAN)';
         handles.ax1.ColorOrderIndex=1;
         handles.ax1.ColorOrderIndex=1;
-        mechs = {'system','interface','intraslab','slab','crustal','shallowcrustal','fault','grid'};
+        mechs = {'interface','intraslab','crustal'};
         str = mechs(NOTNAN);
         
         for jj=1:length(str)
@@ -148,7 +146,7 @@ axis(handles.ax1,'auto')
 cF   = get(0,'format');
 format long g
 if exist('lam1','var')
-    data = num2cell([d;lam2;lam1]); % branches
+    data = num2cell([d;lam1;lam2]); % branches
 else
     data = num2cell([d;lam2]); % average
 end
@@ -158,6 +156,7 @@ uimenu(c,'Label','Undock','Callback',           {@figure2clipboard_uimenu,handle
 uimenu(c,'Label','Undock & compare','Callback', {@figurecompare_uimenu,handles.ax1});
 set(handles.ax1,'uicontextmenu',c);
 format(cF);
+handles.ax1.Layer='top';
 
 if isfield(handles.sys,'D') && isfield(handles.sys,'lambdaDTest')
    Nrows = size(handles.sys.lambdaDTest,1);

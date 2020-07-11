@@ -1,0 +1,58 @@
+Option 0 - Global Parameters
+Projection   : WGS84
+Image        : Lima.mat
+Boundary     : PER_adm1.shp 
+ShearModulus : 3e11      #dyne/cm2
+IM           : -1 PGA
+im           : [logsp(1e-3,10,50);logsp(1e-3,0.1,50)]
+MaxDistance  : 500
+MagDiscrete  : uniform 0.1
+Sigma        : 
+PCE          : shuffle MC 500
+IM1          : 0.01
+IM2          : 1
+Spatial      : @none_spatial
+Spectral     : @corr_none
+SourceDeagg  : on
+Clusters     : off 100 1
+
+Option 1 - Logic Tree Weights
+Geom Weight : 1
+Gmpe Weight : 1
+Mscl Weight : 1 
+
+Option 2 - Source Geometry
+geometry 1
+area1 F3  interface  normal  wc1994 0 1 30 0 -80.991 -8.528 -25 -80.022 -10.322 -25 -77.184 -14.412 -25 -75.856 -13.563 -60 -77.824 -10.464 -60 -79.267 -7.74 -60                                              
+                                                                                                                                                                                                        
+Option 3 - GMPE Library
+gmm at1  SiberRisk2019 interface
+gmm at2  SiberRisk2019 intraslab
+
+Option 4 - GMPE GROUPS
+gmmgroup SB 1 2   
+
+Option 5 - MAGNITUDE SCALING RELATIONS
+seismicity 1
+truncexp F3  NM 4 0.7522 4.8 8.4 # beta 1.732
+
+Option 6 - Pre defined sites
+Lima -77.11 -12.05 0 VS30 760 ky 0.2 covky 0.2 Ts 0.33 covTs 0.1
+
+Option PSDA 1 - PSDA setup                                                                                             
+d         : logsp(1,200,20)  # cm
+realSa    : 30
+realD     : 40
+imhazard  : full
+rng       : shuffle
+method    : PC
+optimize  : on # optimize "on" uses the conditional term M|Sa in M-dependent CDMs
+kysamples : 0
+Tssamples : 0                                                                                                     
+                                                                            
+Option PSDA 2 Library of Slope Displacement Models                                                                    
+RS2009 handle psda_RA2011R rho 0.81
+                                                                                                                  
+Option PSDA 3 Slope Displacement Models                                                                               
+Slope Weights 1
+SL1 interface RS2009 intraslab RS2009 crustal RS2009

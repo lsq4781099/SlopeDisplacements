@@ -25,49 +25,56 @@ handles.Distance_button.CData = c2;
 handles.po_refresh_GE.CData   = c3;
 handles.undock.CData          = c4;
 
-handin        = varargin{1};
-handles.sys   = handin.sys;
-handles.opt   = handin.opt;
-handles.h     = handin.h;
-handles.model = handin.model;
-handles.GoogleEarthOpt     = handin.GoogleEarthOpt;
-handles.branch_menu.String = {handles.model.id};
+
+handles.sys   = varargin{1};
+handles.opt   = varargin{2};
+handles.h     = varargin{3};
+ax            = varargin{4};
+handles.GoogleEarthOpt = GEOptions('default');
+
+Nmodels = size(handles.sys.branch,1);
+handles.branch_menu.String = compose('Branch %i',1:Nmodels);
 handles.site_menu.String   = handles.h.id;
 handles.IM_menu.String     = IM2str(handles.opt.IM);
 
-xlab    = findall(handin.ax,'tag','xlabel'); xlabel(handles.ax1,xlab.String);
-ylab    = findall(handin.ax,'tag','ylabel'); ylabel(handles.ax1,ylab.String);
-mapdata = findall(handin.ax,'tag','shape1'); copyobj(mapdata    , handles.ax1);
-GEimage = findall(handin.ax,'tag','gmap');   copyobj(GEimage(1) , handles.ax1);
-areas   = findall(handin.ax,'tag','areas');  copyobj(areas      , handles.ax1);
-lines   = findall(handin.ax,'tag','lines');  copyobj(lines      , handles.ax1);
-points  = findall(handin.ax,'tag','points'); copyobj(points     , handles.ax1);
-handles.ax1.XLim            = handin.ax.XLim;
-handles.ax1.YLim            = handin.ax.YLim;
-handles.ax1.DataAspectRatio = handin.ax.DataAspectRatio;
+xlab    = findall(ax,'tag','xlabel'); xlabel(handles.ax1,xlab.String);
+ylab    = findall(ax,'tag','ylabel'); ylabel(handles.ax1,ylab.String);
+copyobj(findall(ax,'tag','shape1') , handles.ax1);
+GEimage = findall(ax,'tag','gmap');copyobj(GEimage(1) , handles.ax1);
+
+Ngeom = size(handles.sys.Nsrc,2);
+for i=1:Ngeom
+    copyobj(findall(ax,'tag',sprintf('mesh%g',i)), handles.ax1);
+    copyobj(findall(ax,'tag',sprintf('edge%g',i)), handles.ax1);
+end
+
+handles.ax1.XLim            = ax.XLim;
+handles.ax1.YLim            = ax.YLim;
+handles.ax1.DataAspectRatio = ax.DataAspectRatio;
 uistack(GEimage(1),'bottom'); handles.ax1.Layer='top';
 handles.ax1.ButtonDownFcn={@clear_grdxt;handles.ax1};
 ch = findall(handles.ax1,'tag','gmap');
 ch.ButtonDownFcn={@clear_grdxt;handles.ax1};
 site = handles.h.p(1,:);
-plot  (handles.ax1,site(2),site(1),'rs','tag','siteplot','markerfacecolor','k')
+plot  (handles.ax1,site(1),site(2),'rs','tag','siteplot','markerfacecolor','k')
 
 % computes Tmax
 Tmax = [];
-for i=1:length(handles.model)
-    for j=1:length(handles.model(i).source)
-        str  = func2str(handles.model(i).source(j).gmpe.handle);
-        T    = mGMPE_info(str);
-        Tmax = [Tmax;max(T)];
-    end
+gptr = unique(unique(handles.sys.gmmptr(:)))';
+for i=gptr
+    Tmax = [Tmax;max(handles.sys.gmmlib(i).T)];
 end
-Tmax = min(Tmax);
+Tmax  = min(Tmax);
 handles.Tmax = Tmax;
 
 % state variables
-ch=findall(handles.ax1,'tag','shape1'); handles.display_boundaries.Value = convert(ch.Visible);
-ch=findall(handles.ax1,'tag','areas');  handles.display_sources.Value    = convert(ch.Visible);
+for i=1:Ngeom
+    ch=findall(handles.ax1,'tag',sprintf('mesh%g',i)); handles.display_sources.Value    = convert(ch.Visible);
+    ch=findall(handles.ax1,'tag',sprintf('edge%g',i)); handles.display_boundaries.Value = convert(ch.Visible);
+end
 ch=findall(handles.ax1,'tag','gmap');   handles.display_terrain.Value    = convert(ch.Visible);
+
+handles.uhs=[];
 
 guidata(hObject, handles);
 setTickLabel(handles.ax1)
@@ -99,7 +106,14 @@ if val==1
     u = handles.data.MapTs;
 else
     modo = handles.uibuttongroup1.SelectedObject.String;
-    u    = getGRDfield(handles,modo);
+    u    = getGRDfield(...
+        handles.figure1,...
+        handles.sys,...
+        handles.opt,...
+        handles.data,...
+        handles.h,...
+        handles.uhs,...
+        modo);
 end
 ptype = handles.display_contours.Value;
 plot_GRD_data(handles.ax1,handles.p,handles.t,u,tit,ptype)
@@ -116,6 +130,7 @@ if handles.select_IM.Value>1
 end
 
 function browse_grd_Callback(hObject, eventdata, handles)
+
 W=what('platform_grd_sources');
 [fname,pathname,FILTERINDEX]=uigetfile([W.path,'\*.mat']);
 if FILTERINDEX==0, return; end
@@ -128,7 +143,7 @@ handles.data.MapRSR(:,:,ind)=[];
 [x,y] = meshgrid(handles.data.Long,handles.data.Lat);
 handles.p = [x(:),y(:)];
 handles.t = delaunayn(handles.p);
-handles.select_IM.String=['T(s)',IM2str(handles.data.T)];
+handles.select_IM.String=['T(s)';IM2str(handles.data.T)];
 handles.select_IM.Enable='on';
 handles.retperiod.Enable='on';
 tit = handles.select_IM.String{1};
@@ -187,20 +202,20 @@ handles.source2.Value  = 1;
 handles.retperiod.Enable='off';
 guidata(hObject,handles)
 
-function grd_file_Callback(hObject, eventdata, handles)
+function grd_file_Callback(~,~,~)
 
-function uhs_file_Callback(hObject, eventdata, handles)
-
+function uhs_file_Callback(~, ~, ~)
 
 % ----------------- display options ---------------------------------------
-function display_grid_Callback(hObject, eventdata, handles)
+function display_grid_Callback(hObject, ~, handles)
 switch hObject.Value
     case 0, grid(handles.ax1,'off');
     case 1, grid(handles.ax1,'on');
 end
 
 function display_boundaries_Callback(hObject, eventdata, handles)
-ch=findall(handles.ax1,'tag','shape1');
+branch_ptr=handles.branch_menu.Value;
+ch=findall(handles.ax1,'tag',sprintf('edge%i',branch_ptr));
 if ~isempty(ch)
     switch hObject.Value
         case 0, ch.Visible='off';
@@ -209,13 +224,12 @@ if ~isempty(ch)
 end
 
 function display_sources_Callback(hObject, eventdata, handles)
-ch1=findall(handles.ax1,'tag','areas');
-ch2=findall(handles.ax1,'tag','lines');
-ch3=findall(handles.ax1,'tag','points');
-if ~isempty(ch1)
+branch_ptr=handles.branch_menu.Value;
+ch=findall(handles.ax1,'tag',sprintf('mesh%i',branch_ptr));
+if ~isempty(ch)
     switch hObject.Value
-        case 0, ch1.Visible='off';ch2.Visible='off';ch3.Visible='off';
-        case 1, ch1.Visible='on'; ch2.Visible='on'; ch3.Visible='on';
+        case 0, ch.Visible='off';
+        case 1, ch.Visible='on'; 
     end
 end
 
@@ -362,7 +376,14 @@ if val==1
     ptype = handles.display_contours.Value;
     plot_GRD_data(handles.ax1,handles.p,handles.t,handles.data.MapTs,tit,ptype)
 else
-    u     = getGRDfield(handles,modo);
+    u    = getGRDfield(...
+        handles.figure1,...
+        handles.sys,...
+        handles.opt,...
+        handles.data,...
+        handles.h,...
+        handles.uhs,...
+        modo);
     ptype = handles.display_contours.Value;
     plot_GRD_data(handles.ax1,handles.p,handles.t,u,tit,ptype)
 end

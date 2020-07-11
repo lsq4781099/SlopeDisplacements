@@ -39,21 +39,27 @@ function varargout = GlobalParam_OutputFcn(hObject, eventdata, handles)
 opt.Projection       = handles.Projection.String{handles.Projection.Value};
 switch opt.Projection
     case 'ECEF'
-        opt.ellipsoid=struct('Code',0);
+        opt.ellipsoid=struct('Code',[]);
     otherwise
         opt.ellipsoid=referenceEllipsoid(opt.Projection,'km');
 end
 opt.Image            = handles.Image.String;
 opt.Boundary         = handles.Boundary.String;
-opt.Layer            = handles.Layer.String;
 opt.ShearModulus     = str2double(handles.ShearModulus.String);
 opt.IM               = str2IM(handles.IM.String);
 opt.im               = handles.im;
 opt.MaxDistance      = str2double(handles.MaxDistance.String);
 
-switch handles.check1.Value
-    case 1, opt.MagDiscrete     = {'gauss'  ,str2double(handles.pop2.String{handles.pop2.Value})};
-    case 0, opt.MagDiscrete     = {'uniform',str2double(handles.txt10.String)};
+switch handles.uibuttongroup5.SelectedObject.String
+    case 'Sigma untruncated', opt.Sigma={};
+    case 'Truncate Sigma'   , opt.Sigma={'truncate' ,str2double(handles.edit_gmm2.String)};
+    case 'Overwrite Sigma'  , opt.Sigma={'overwrite',str2double(handles.edit_gmm3.String)};
+end
+
+switch handles.uibuttongroup6.SelectedObject.String
+    case 'Important Sampling', opt.MagDiscrete     = {'isampling' ,str2double(handles.pop2.String{handles.pop0.Value})};
+    case 'Gaussian Points'   , opt.MagDiscrete     = {'gauss'     ,str2double(handles.pop2.String{handles.pop2.Value})};
+    case 'Uniform Bins'      , opt.MagDiscrete     = {'uniform'  , str2double(handles.txt10.String)};
 end
 
 switch handles.check5.Value
@@ -62,8 +68,8 @@ switch handles.check5.Value
 end
 
 switch handles.check3.Value
-    case 1, opt.CGMM = {rngtype,'PC',str2double(handles.SimPCE.String)};
-    case 0, opt.CGMM = {rngtype,'MC',str2double(handles.SimPCE.String)};
+    case 1, opt.PCE = {rngtype,'PC',str2double(handles.SimPCE.String)};
+    case 0, opt.PCE = {rngtype,'MC',str2double(handles.SimPCE.String)};
 end
 
 method1      = pshatoolbox_methods(3); 
@@ -73,9 +79,9 @@ opt.IM2      = str2IM(handles.secondaryIM.String); opt.IM2=opt.IM2(:);
 opt.Spatial  = method1(handles.pop_spatial.Value).func;
 opt.Spectral = method2(handles.pop_spectral.Value).func;
 
-switch handles.LiteModeCheck.Value
-    case 0,opt.LiteMode='off';
-    case 1,opt.LiteMode='on';
+switch handles.SourceDeaggCheck.Value
+    case 0,opt.SourceDeagg='off';
+    case 1,opt.SourceDeagg='on';
 end
 
 opt.Clusters = cell(1,2);
@@ -102,14 +108,13 @@ function handles=popfields(handles,opt)
 [~,handles.Projection.Value] = intersect(lower(handles.Projection.String),lower(opt.Projection));
 handles.Image.String         = opt.Image;
 handles.Boundary.String      = opt.Boundary;
-handles.Layer.String         = opt.Layer;
 handles.ShearModulus.String  = sprintf('%4.2e',opt.ShearModulus);
 
-switch opt.LiteMode
+switch opt.SourceDeagg
     case 'off'
-        handles.LiteModeCheck.Value=0;
+        handles.SourceDeaggCheck.Value=0;
     case 'on'
-        handles.LiteModeCheck.Value=1;
+        handles.SourceDeaggCheck.Value=1;
 end
 
 switch opt.Clusters{1}
@@ -132,13 +137,24 @@ imdisplayed                 = handles.imdisplayed;
 handles.imvalues.Data       = num2cell(opt.im(:,imdisplayed));
 handles.imvalues.ColumnName = IM2str(opt.IM(imdisplayed));
 handles.MaxDistance.String  = num2str(opt.MaxDistance);
-handles.SimPCE.String       = num2str(max(opt.CGMM{3},20));
+handles.SimPCE.String       = num2str(max(opt.PCE{3},20));
 
-% CGMM Parametetr
-handles.check3.Value = strcmpi(opt.CGMM{2},'PC');
-handles.check4.Value = strcmpi(opt.CGMM{2},'MC');
-handles.check5.Value = strcmpi(opt.CGMM{1},'shuffle');
-handles.check6.Value = strcmpi(opt.CGMM{1},'default');
+handles.edit_gmm2.Enable='off';
+handles.edit_gmm3.Enable='off';
+if isempty(opt.Sigma)
+    handles.rad_gmm1.Value=1;
+else
+    switch opt.Sigma{1}
+        case 'truncate' , handles.rad_gmm2.Value=1;handles.edit_gmm2.Enable='On'; handles.edit_gmm2.String=sprintf('%g',opt.Sigma{2});
+        case 'overwrite', handles.rad_gmm3.Value=1;handles.edit_gmm3.Enable='On'; handles.edit_gmm3.String=sprintf('%g',opt.Sigma{2});
+    end
+end
+
+% PCE Parameters
+handles.check3.Value = strcmpi(opt.PCE{2},'PC');
+handles.check4.Value = strcmpi(opt.PCE{2},'MC');
+handles.check5.Value = strcmpi(opt.PCE{1},'shuffle');
+handles.check6.Value = strcmpi(opt.PCE{1},'default');
 
 % dsha parameters
 handles.primaryIM.String    = IM2str(opt.IM1);
@@ -153,19 +169,31 @@ str2     = func2str(opt.Spectral);
 [~,handles.pop_spectral.Value] = intersect({method2.str},str2);
 
 % magnitude integration
+handles.check0.Value = strcmpi(opt.MagDiscrete{1},'isampling');
 handles.check1.Value = strcmpi(opt.MagDiscrete{1},'gauss');
 handles.check2.Value = strcmpi(opt.MagDiscrete{1},'uniform');
+
+if handles.check0.Value
+    str  = handles.pop2.String;
+    stri = num2str(opt.MagDiscrete{2});
+    [~,handles.pop0.Value]=intersect(str,stri);
+    handles.pop0.Enable ='on';
+    handles.pop2.Enable ='off';
+    handles.txt10.Enable='off';
+end
 
 if handles.check1.Value
     str  = handles.pop2.String;
     stri = num2str(opt.MagDiscrete{2});
     [~,handles.pop2.Value]=intersect(str,stri);
+    handles.pop0.Enable ='off';
     handles.pop2.Enable='on';
     handles.txt10.Enable='off';
 end
 
 if handles.check2.Value
     handles.txt10.String = num2str(opt.MagDiscrete{2});
+    handles.pop0.Enable='off';
     handles.pop2.Enable='off';
     handles.txt10.Enable='on';
 end
@@ -208,26 +236,24 @@ function Image_Callback(hObject, eventdata, handles)
 
 function Boundary_Callback(hObject, eventdata, handles)
 
-function Layer_Callback(hObject, eventdata, handles)
-
 function RestoreDefault_Callback(hObject, eventdata, handles)
 
 opt.Projection   = 'WGS84';
 opt.ellipsoid    = referenceEllipsoid(opt.Projection,'km');
 opt.Image        = '';
 opt.Boundary     = '';
-opt.Layer        = '';
 opt.ShearModulus = 3.0000e+11;
 opt.IM           = 0;
 opt.im           = [0.0010 0.01 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.55 0.60 0.70 0.80 0.90 1.00]';
 opt.MaxDistance  = 500;
 opt.MagDiscrete  = {'gauss',10};
-opt.CGMM         = {'shuffle','MC',500};
+opt.Sigma        = {};
+opt.PCE          = {'shuffle','MC',500};
 opt.IM1          = 0.0100;
 opt.IM2          = [1 2]';
 opt.Spatial      = @none_spatial;
 opt.Spectral     = @none_spectral;
-opt.LiteMode     = 'off';
+opt.SourceDeagg  = 'on';
 opt.Clusters     = {'off',[100 1]};
 D = what('platform_realvalues');
 save([D.path,'\','pshatoolbox_RealValues'],'opt');
@@ -235,7 +261,6 @@ handles=popfields(handles,opt);
 guidata(hObject,handles)
 
 function Image_ButtonDownFcn(hObject, eventdata, handles)
-
 D = what('platform_earth');
 [filename,pathname]=uigetfile([D.path,'\*.mat'], 'Select file');
 if isnumeric(filename)
@@ -256,32 +281,11 @@ addpath(pathname);
 handles.Boundary.String=filename;
 guidata(hObject,handles)
 
-function Layer_ButtonDownFcn(hObject, eventdata, handles)
-
-D = what('platform_shapefiles');
-[filename,pathname]=uigetfile([D.path,'\*.shp'], 'Select file');
-if isnumeric(filename)
-    return
-end
-addpath(pathname);
-handles.Layer.String=filename;
-guidata(hObject,handles)
-
 function check1_Callback(hObject, eventdata, handles)
-
-switch hObject.Value
-    case 0, handles.check2.Value=1;handles.pop2.Enable='off'; handles.txt10.Enable='on';
-    case 1, handles.check2.Value=0;handles.pop2.Enable='on';  handles.txt10.Enable='off';
-end
 
 function pop2_Callback(hObject, eventdata, handles)
 
 function check2_Callback(hObject, eventdata, handles)
-
-switch hObject.Value
-    case 1, handles.check1.Value=0;handles.pop2.Enable='off'; handles.txt10.Enable='on';
-    case 0, handles.check1.Value=1;handles.pop2.Enable='on';  handles.txt10.Enable='off';
-end
 
 function txt10_Callback(hObject, eventdata, handles)
 
@@ -352,7 +356,7 @@ Nc = str2double(hObject.String);
 Nc = max(round(Nc),1);
 hObject.String=sprintf('%i',Nc);
 
-function LiteModeCheck_Callback(hObject, eventdata, handles)
+function SourceDeaggCheck_Callback(hObject, eventdata, handles)
 
 function UseClusters_Callback(hObject, eventdata, handles)
 
@@ -363,4 +367,34 @@ switch hObject.Value
     case 1
         handles.numclusters.Enable   = 'on';
         handles.numreplicates.Enable = 'on';
+end
+
+function edit_gmm2_Callback(hObject, eventdata, handles)
+
+function edit_gmm3_Callback(hObject, eventdata, handles)
+
+function rad_gmm1_Callback(hObject, eventdata, handles)
+
+function uibuttongroup5_SelectionChangedFcn(hObject, eventdata, handles)
+
+switch hObject.String
+    case 'Sigma untruncated', handles.edit_gmm2.Enable='off';handles.edit_gmm3.Enable='off';
+    case 'Truncate Sigma'   , handles.edit_gmm2.Enable='on';handles.edit_gmm3.Enable='off';
+    case 'Overwrite Sigma'  , handles.edit_gmm2.Enable='off';handles.edit_gmm3.Enable='on';
+end
+
+function check0_Callback(hObject, eventdata, handles)
+
+function pop0_Callback(hObject, eventdata, handles)
+
+function uibuttongroup6_SelectionChangedFcn(hObject, eventdata, handles)
+
+handles.pop0.Enable='off';
+handles.pop2.Enable='off';
+handles.txt10.Enable='off';
+
+switch handles.uibuttongroup6.SelectedObject.String
+    case 'Important Sampling', handles.pop0.Enable  ='on';
+    case 'Gaussian Points'   , handles.pop2.Enable  ='on';
+    case 'Uniform Bins'      , handles.txt10.Enable ='on';
 end

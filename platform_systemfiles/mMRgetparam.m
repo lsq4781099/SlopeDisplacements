@@ -1,4 +1,4 @@
-function [param,val] = mMRgetparam(handles) %#ok<*INUSD,*DEFNU>
+function [NMmin,param,val] = mMRgetparam(handles) %#ok<*INUSD,*DEFNU>
 
 ch=get(handles.panel2,'children');
 ch2=ch(handles.edit);
@@ -16,25 +16,37 @@ methods = pshatoolbox_methods(2);
 
 switch methods(handles.MRselect.Value).str
     case 'delta'
-        param.NMmin    = str2double(str{1});
-        param.M        = str2double(str{2});
+        NMmin    = str2double(str{1});
+        M        = str2double(str{2});
+        param    = M;
         
     case 'truncexp'
-        param.NMmin    = str2double(str{1});
-        param.bvalue   = str2double(str{2});
-        param.Mmin     = str2double(str{3});
-        param.Mmax     = str2double(str{4});
+        NMmin    = str2double(str{1});
+        bvalue   = str2double(str{2});
+        Mmin     = str2double(str{3});
+        Mmax     = str2double(str{4});
+        param    = [bvalue,Mmin,Mmax];
         
     case 'truncnorm'
-        param.NMmin    = str2double(str{1});
-        param.Mmin     = str2double(str{2});
-        param.Mmax     = str2double(str{3});
-        param.Mchar    = str2double(str{4});
-        param.sigmaM   = str2double(str{5});
+        NMmin    = str2double(str{1});
+        Mmin     = str2double(str{2});
+        Mmax     = str2double(str{3});
+        Mchar    = str2double(str{4});
+        sigmaM   = str2double(str{5});
+        param    = [Mmin,Mmax,Mchar,sigmaM];
         
-    case 'youngscoppersmith'
-        param.NMmin    = str2double(str{1});
-        param.bvalue   = str2double(str{2});
-        param.Mmin     = str2double(str{3});
-        param.Mchar    = str2double(str{4});
+    case 'yc1985'
+        NMmin    = str2double(str{1});
+        bvalue   = str2double(str{2});
+        Mmin     = str2double(str{3});
+        Mchar    = str2double(str{4});
+        param    = [bvalue,Mmin,Mchar];
+        
+    case 'magtable'
+        Mmin     = str2double(str{1});
+        binwidth = str2double(str{2});
+        occurrance = ch2(14).String;
+        occurrance = str2double(occurrance);
+        NMmin    = occurrance(1);
+        param    = [Mmin,binwidth,occurrance(:)'];
 end

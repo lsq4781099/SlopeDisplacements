@@ -9,18 +9,18 @@ Option 0 - Global Parameters
 Projection   : ECEF
 Image        : 
 Boundary     : 
-Layer        : 
 ShearModulus : 3e11      #dyne/cm2
 IM           : 0
 im           : 0.001000000000000	0.010000000000000	0.050000000000000	0.100000000000000	0.150000000000000	0.200000000000000	0.250000000000000	0.300000000000000	0.350000000000000	0.400000000000000	0.450000000000000	0.500000000000000	0.550000000000000
 MaxDistance  : 500
 MagDiscrete  : gauss 10
-CGMM         : shuffle MC 500
+Sigma        : overwrite 0
+PCE          : shuffle MC 500
 IM1          : 0.01
-IM2          : 0.1 0.2 0.5 1 2
+IM2          : 1
 Spatial      : @none_spatial
-Spectral     : @none_spectral
-LiteMode     : off
+Spectral     : @corr_none
+SourceDeagg  : on
 Clusters     : off 100 1
 
 Option 1 - Logic Tree Weights
@@ -29,31 +29,28 @@ Gmpe Weight : 1
 Mscl Weight : 1 
 
 Option 2 - Source Geometry
-geometry 1 Strike-Slip Fault
-S1 type area mechanism shallowcrustal gmpe 1 vertices 0    0       -1  0   -6.35085296108588  -12 25  -6.35085296108588  -12 25   0       -1
+geometry 1
+
+area3  S1 crustal reverse wc1994 0 1 0 60 25 -999 2 0.05    0 0 -1  -6.35085296108588 0 -12  -6.35085296108588 25 -12   0  25 -1
 
 Option 3 - GMPE Library
-Sadigh97 handle Sadigh1997 mechanism reverse/thrust sigma overwrite 0
+gmm Sadigh97 Sadigh1997 reverse
 
 Option 4 - GMPE GROUPS
-Sadigh 1997 pointers 1
+gmmgroup Sadigh1997 1
 
 Option 5 - MAGNITUDE SCALING RELATIONS
-seismicity 1 Delta  #SlipRate in mm/year
-S1 handle delta sliprate 2 bvalue 0.9 M 6.0
+seismicity 1
+delta S1 SR 2 6.0
 
-Option 6 - RUPTURE AREA SCALING
-S1 type rectangular spacing 0.05 RA custom 1 4 0 aratio 2 taper true 
-
-Option 7 - Pre defined sites (Optional)
-source 760
-site1  12.5   0 0 # On Fault Midpoint along Strike  
-site2  12.5 -10 0 # 10km West of fault, at midpoint 
-site3  12.5 -50 0 # 50km West of fault, at midpoint 
-site4   0     0 0 # South end of fault              
-site5 -10     0 0 # 10km south of fault along strike
-site6  25     0 0 # North end of fault              
-site7  12.5  10 0 # 10km East of fault, at midpoint 
+Option 6 - Pre defined sites (Optional)
+site1   0  12.5 0 VS30 760 # On Fault Midpoint along Strike  
+site2 -10  12.5 0 VS30 760 # 10km West of fault, at midpoint 
+site3 -50  12.5 0 VS30 760 # 50km West of fault, at midpoint 
+site4   0   0   0 VS30 760 # South end of fault              
+site5   0 -10   0 VS30 760 # 10km south of fault along strike
+site6   0  25   0 VS30 760 # North end of fault              
+site7  10  12.5 0 VS30 760 # 10km East of fault, at midpoint 
 
 Option 8 - Verification Hazard Curve (Optional)
 PGA   1.000000E-03	1.000000E-02	5.000000E-02	1.000000E-01	1.500000E-01	2.000000E-01	2.500000E-01	3.000000E-01	3.500000E-01	4.000000E-01	4.500000E-01	5.000000E-01	5.500000E-01

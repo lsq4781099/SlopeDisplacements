@@ -16,56 +16,56 @@ else
     gui_mainfcn(gui_State, varargin{:});
 end
 
-function DeaggregationMR_OpeningFcn(hObject, eventdata, handles, varargin) %#ok<*INUSL>
-handles.Exit_button.CData  = double(imread('exit.jpg'))/255;
+function DeaggregationMR_OpeningFcn(hObject, ~, handles, varargin) 
 
+handles.Exit_button.CData  = double(imread('exit.jpg'))/255;
+handles.undock.CData      = double(imread('Undock.jpg'))/255;
 handles.sys    = varargin{1};
-handles.model  = varargin{2};
-handles.opt    = varargin{3};
-handles.h      = varargin{4};
+handles.opt    = varargin{2};
+handles.h      = varargin{3};
 
 % ------------ REMOVES PCE MODELS (AT LEAST FOR NOW) ----------------------
-handles.isREGULAR = find(horzcat(handles.model.isregular)==1);
-handles.isPCE     = find(horzcat(handles.model.isregular)==0);
-isREGULAR = handles.isREGULAR;
-handles.model = handles.model(isREGULAR); 
-[~,B]=setdiff(handles.sys.BRANCH(:,2),isREGULAR);
+isREG = handles.sys.isREG;
+[~,B]=setdiff(handles.sys.branch(:,2),isREG);
 if ~isempty(B)
-    handles.sys.BRANCH(B,:)=[];
-    handles.sys.WEIGHT(B,:)=[];
-    handles.sys.WEIGHT(:,4)=handles.sys.WEIGHT(:,4)/sum(handles.sys.WEIGHT(:,4));
+    handles.sys.branch(B,:)=[];
+    handles.sys.weight(B,:)=[];
+    handles.sys.weight(:,5)=handles.sys.weight(:,5)/sum(handles.sys.weight(:,5));
+    warndlg('PCE Models removed from logic tree. Logic Tree weights were normalized')
+    uiwait
 end
+
 % -------------------------------------------------------------------------
-
-% updates seismic
 handles.opt.MagDiscrete = {'uniform',0.1};
-handles.model  = process_model(handles.sys,handles.opt);
+n=max(handles.sys.branch(:,3));
+for i=1:n
+    handles.sys.mrr2(i) = process_truncexp  (handles.sys.mrr2(i) , {'uniform' 0.1});
+    handles.sys.mrr3(i) = process_truncnorm (handles.sys.mrr3(i) , {'uniform' 0.1});
+    handles.sys.mrr4(i) = process_yc1985    (handles.sys.mrr4(i) , {'uniform' 0.1});
+end
 
-% Build interface to adjust this piece of code
-%--------------------------------------------------------------------------
-rmin  = 0;  rmax  = 360; dr    = 40;
-handles.Rbin      = [(rmin:dr:rmax-dr)',(rmin:dr:rmax-dr)'+dr];
-mmin  = 5; mmax  = 9.2; dm    = 0.2;
-handles.Mbin      = [(mmin:dm:mmax-dm)',(mmin:dm:mmax-dm)'+dm];
-handles.returnperiod = [30;43;72;108;144;224;250;336;475;712;949;1462;1950;2475;3712;4975;7462;9950;19900];
 %--------------------------------------------------------------------------
 
+handles.Rbin         = createObj('Rbin');
+handles.Mbin         = createObj('Mbin');
+handles.returnperiod = createObj('returnperiods');
+
+%--------------------------------------------------------------------------
+Nmodels = size(handles.sys.branch,1);
 handles.popreturn.String   = num2cell(handles.returnperiod);
 handles.popreturn.Value    = 1;
-handles.menu_branch.String = {handles.model.id};
+handles.menu_branch.String = compose('Branch %i',1:Nmodels);
 handles.menu_branch.Value  = 1;
-handles.menu_source.String = ['all sources',{handles.model(1).source.label}];
+handles.menu_source.String = [{'all sources'};handles.sys.labelG{1}];
 handles.menu_source.Value  = 1;
 handles.menu_site.String   = handles.h.id;
 handles.menu_site.Value    = 1;
 handles.IM_menu.String     = IM2str(handles.opt.IM);
 handles.poolsize           = 0;
-
 handles = drawbars(handles);
-xlabel(handles.ax,handles.IM_menu.String{1},'fontsize',10);
-ylabel(handles.ax,'Exceedance Rate','fontsize',10);
-str = sprintf('%s | %s | %s',handles.model(1).id1,handles.model(1).id2,handles.model(1).id3);
-% title(handles.ax,str,'fontsize',9,'fontweight','normal','tag','axtitle')
+
+xlabel(handles.ax,handles.IM_menu.String{1},'fontsize',8);
+ylabel(handles.ax,'Exceedance Rate','fontsize',8);
 set (handles.figure1, 'WindowButtonMotionFcn', {@mouseMove,handles});
 handles.bartitle.String='';
 handles.bartitle2.String='';
@@ -74,17 +74,15 @@ rotate3d(handles.ax1)
 plot(handles.ax,nan*[1 1],handles.ax.YLim,'-','tag','haz1');
 plot(handles.ax,nan*[1 1],handles.ax.YLim,'.' ,'tag','haz2');
 plot(handles.ax,nan*[1 1],handles.ax.YLim,'k:','tag','line');
-
 guidata(hObject, handles);
 
-function varargout = DeaggregationMR_OutputFcn(hObject, eventdata, handles)
+function varargout = DeaggregationMR_OutputFcn(~,~,~)
 varargout{1} = [];
 
 % -------- FILE MENU ------------------------------------------------------
+function File_Callback(~, ~, ~)
 
-function File_Callback(hObject, eventdata, handles)
-
-function SaveChart_Callback(hObject, eventdata, handles)
+function SaveChart_Callback(~, ~, handles)
 
 if ~isfield(handles,'deagg2')
     return
@@ -121,36 +119,35 @@ end
 fclose(fid);
 open([PathName,FileName])
 
-function Exit_Callback(hObject, eventdata, handles)
-close(handles.figure1)
+function Exit_Callback(~, ~, ~)
+close(gcf)
 
-function Exit_button_Callback(hObject, eventdata, handles)
-close(handles.figure1)
+function Exit_button_Callback(~, ~, ~)
+close(gcf)
 
 % -------- EDIT MENU ------------------------------------------------------
-
-function Edit_Callback(hObject, eventdata, handles)
+function Edit_Callback(~, ~, ~) %#ok<*DEFNU>
 
 % -------- PANNEL OPTIONS -------------------------------------------------
 
-function menu_branch_Callback(hObject, eventdata, handles)
+function menu_branch_Callback(hObject, ~, handles)
 handles = runDeaggAnalysis(handles);
 guidata(hObject,handles)
 
-function menu_source_Callback(hObject, eventdata, handles)
+function menu_source_Callback(hObject, ~, handles)
 handles = runDeaggAnalysis(handles);
 guidata(hObject,handles)
 
-function menu_site_Callback(hObject, eventdata, handles) %#ok<*DEFNU,*INUSD>
+function menu_site_Callback(hObject, ~, handles) 
 handles = runDeaggAnalysis(handles);
 guidata(hObject,handles)
 
-function IM_menu_Callback(hObject, eventdata, handles)
+function IM_menu_Callback(hObject, ~, handles)
 handles = runDeaggAnalysis(handles);
 guidata(hObject,handles)
 
 % --------- AUXILIARY FUNCTIONS -------------------------------------------
-function mouseMove(hObject,eventdata,handles)
+function mouseMove(~,~,handles)
 
 if ~isfield(handles,'deagg2')
     return
@@ -204,20 +201,20 @@ function handles = drawbars(handles,varargin)
 
 switch nargin
     case 1
-        Mwin      = 5.1:0.2:8.9;        NM = length(Mwin);
-        Rwin      = linspace(0,600,10); NR = length(Rwin); dr = Rwin(2)-Rwin(1);
+        Mwin      = mean(handles.Mbin,2);   NM = length(Mwin);
+        Rwin      = mean(handles.Rbin,2);   NR = length(Rwin); dr = Rwin(2)-Rwin(1);
         handles.b=bar3(handles.ax1,Rwin,nan(NR,NM));
         set(handles.ax1,...
             'xtick',1:1:length(Mwin),...
             'xticklabel',Mwin,...
             'projection','perspective',...
             'fontsize',8,...
-            'ylim',[0-dr/2,600+dr/2],...
+            'ylim',[Rwin(1)-dr/2,Rwin(end)+dr/2],...
             'zlim',[0 1])
     otherwise
 end
 
-function run_Callback(hObject, eventdata, handles)
+function run_Callback(hObject, ~, handles)
 handles = runDeaggAnalysis(handles);
 guidata(hObject,handles)
 
@@ -233,30 +230,33 @@ model_ptr  = handles.menu_branch.Value;
 source_ptr = handles.menu_source.Value;
 site_ptr   = handles.menu_site.Value;
 opt        = handles.opt;
-
+branch     = handles.sys.branch;
 if source_ptr == 1
-    Nsource = length(handles.model(model_ptr).source);
+    Nsource    = sum(handles.sys.Nsrc(:,branch(model_ptr,1)));
     source_ptr = 1:Nsource;
 else
-    Nsource = 1;
+    Nsource     = 1;
     source_ptr  = source_ptr-1;
 end
 
-IM    = opt.IM(IM_ptr);
-site  = handles.h.p(site_ptr,:);
-Vs30  = handles.h.Vs30(site_ptr);
-model = handles.model(model_ptr);
-model.source = model.source(source_ptr);
+IM      = opt.IM(IM_ptr);
+h.id    = handles.h.id(site_ptr,:);
+h.p     = handles.h.p(site_ptr,:);
+h.param = handles.h.param;
+h.value = handles.h.value(site_ptr,:);
 
 % computes hazard curve
-lambda1 = runhazard1(im1,IM,site,Vs30,opt,model,Nsource,1);
+sources = buildmodelin(handles.sys,branch(model_ptr,:),handles.opt.ShearModulus);
+sources = sources(source_ptr);
+
+opt.SourceDeagg='off';
+lambda1 = runhazard1(im1,IM,h,opt,sources,Nsource,1);
 lambda1 = permute(lambda1,[2,1,3,4]);
-lambda1 = nansum(lambda1,4);
 if all(lambda1==0)
     ch=findall(handles.ax,'tag','haz1'); ch.XData = [nan;nan]; ch.YData = [nan;nan];
     ch=findall(handles.ax,'tag','haz2'); ch.XData = [nan;nan]; ch.YData = [nan;nan];
     handles.bartitle.String='';
-    handles.bartitle2.String='';    
+    handles.bartitle2.String='';
     return
 end
 
@@ -270,12 +270,10 @@ yData = logx(~isinf(logy));
 xData=xData(IND);
 yData=yData(IND);
 
-
-handles.returnperiod = [30;43;72;108;144;224;250;336;475;712;949;1462;1950;2475;3712;4975;7462;9950;19900];
 handles.popreturn.String  = num2cell(handles.returnperiod);
 
 ff = [find(handles.returnperiod<min(1./exp(xData)));
-      find(handles.returnperiod>max(1./exp(xData)))];
+    find(handles.returnperiod>max(1./exp(xData)))];
 if ~isempty(ff)
     handles.returnperiod(ff)=[];
     handles.popreturn.String(ff)=[];
@@ -287,7 +285,8 @@ logxx   = interp1(xData,yData,logyy,'pchip');
 Nim2    = length(logxx);
 im2     = exp(logxx);
 lambda2 = nan(1,Nim2,1,Nsource,1);
-deagg2  = runhazard2(im2,IM,site,Vs30,opt,model,Nsource,1);
+deagg2  = runhazard2(im2,IM,h,opt,sources,Nsource,1);
+
 for i=1:numel(deagg2)
     if ~isempty(deagg2{i})
         lambda2(i)=sum(deagg2{i}(:,3));
@@ -307,9 +306,9 @@ handles.im2     = im2;
 handles.lambda1 = lambda1;
 handles.lambda2 = lambda2;
 handles.deagg2  = deagg2;
-handles         = run_func(handles,model);
+handles         = run_func(handles);
 
-function handles=run_func(handles,model)
+function handles=run_func(handles)
 
 lambda2 = handles.lambda2;
 deagg2  = handles.deagg2;
@@ -340,8 +339,8 @@ handles.dchart = deagghazard(deagg,lambda2,Mcenter,Rcenter);
 Mbar = zeros(numel(deagg),1);
 Rbar = zeros(numel(deagg),1);
 for i=1:numel(deagg)
-    Mbar(i)=sum(deagg{i}(:,1).*deagg{i}(:,3))/sum(deagg{i}(:,3));
-    Rbar(i)=sum(deagg{i}(:,2).*deagg{i}(:,3))/sum(deagg{i}(:,3));
+    Mbar(i)=nansum(deagg{i}(:,1).*deagg{i}(:,3))/nansum(deagg{i}(:,3));
+    Rbar(i)=nansum(deagg{i}(:,2).*deagg{i}(:,3))/nansum(deagg{i}(:,3));
 end
 
 handles.b=bar3(handles.ax1,Rcenter,handles.dchart(:,:,1));
@@ -376,7 +375,10 @@ handles.popreturn.Value=B;
 
 set (handles.figure1, 'WindowButtonMotionFcn', {@mouseMove,handles});
 
-function popreturn_Callback(hObject, eventdata, handles)
+function popreturn_Callback(hObject, ~, handles)
+if ~isfield(handles,'dchart')
+    return
+end
 ch=findall(handles.ax,'tag','haz2');
 B=hObject.Value;
 dchart=handles.dchart(:,:,B);
@@ -402,8 +404,11 @@ for i=1:numel(handles.b)
     handles.line.YData=handles.ax.YLim;
 end
 
-
-function defineBins_Callback(hObject, eventdata, handles)
+function defineBins_Callback(hObject, ~, handles)
 
 [handles.Rbin,handles.Mbin]=setMRebins(handles.Rbin,handles.Mbin);
+handles = drawbars(handles);
 guidata(hObject,handles)
+
+function undock_Callback(hObject, eventdata, handles)
+figure2clipboard_uimenu(hObject, eventdata,handles.ax1)

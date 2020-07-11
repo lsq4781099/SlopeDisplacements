@@ -1,4 +1,4 @@
-function[rhyp]=dist_rhyp4(r0,rf,~,~,~,~)
+function[rhyp]=dist_rhyp4(r0,rf,~,~,~)
 %------------------------------------------------------------------------
 % rhyp  = distance from the site to the hypocenter
 % r0   = O(xyz) cordiantes of the site (km)

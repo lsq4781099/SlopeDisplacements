@@ -1,7 +1,4 @@
-function out=enableswitchmode(handles)
-
-isMRE   = ~isempty(handles.MRE);
-isSHAKE = ~isempty(handles.shakefield);
+function out=enableswitchmode(isMRE,isSHAKE)
 
 if and(isMRE,isSHAKE)
     out='on';

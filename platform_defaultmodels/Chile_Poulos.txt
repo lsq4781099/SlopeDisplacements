@@ -2,74 +2,63 @@ Option 0 - Global Parameters
 Projection   : WGS84
 Image        : chile.mat
 Boundary     : CHL_adm1.shp
-Layer        :
 ShearModulus : 3e11      #dyne/cm2
 IM           : PGA
-im           : logsp(0.001,2,20)
+im           : logsp(0.01,3,20)
 MaxDistance  : 500
-MagDiscrete  : gauss 12
-CGMM         : shuffle MC 500
+MagDiscrete  : gauss 10
+Sigma        : truncate 3
+PCE          : shuffle MC 500
 IM1          : 0.01
-IM2          : 0.1
+IM2          : 1
 Spatial      : @none_spatial
-Spectral     : @none_spectral
-LiteMode     : off
+Spectral     : @corr_none
+SourceDeagg  : on
 Clusters     : off 100 1
 
 Option 1 - Logic Tree Weights
 Geom Weight : 1
-Gmpe Weight : 0.10 0.10 0.20 0.3 0.30
+Gmpe Weight : 1/4 1/4 1/4 1/4
 Mscl Weight : 1 
 
 Option 2 - Source Geometry
-geometry 1 Poulos 2018
-zone1 type area mechanism interface gmpe 1 vertices Poulos_SeismicHazard.mat 1
-zone2 type area mechanism interface gmpe 1 vertices Poulos_SeismicHazard.mat 2
-zone3 type area mechanism interface gmpe 1 vertices Poulos_SeismicHazard.mat 3
-zone4 type area mechanism intraslab gmpe 2 vertices Poulos_SeismicHazard.mat 4
-zone5 type area mechanism intraslab gmpe 2 vertices Poulos_SeismicHazard.mat 5
-zone6 type area mechanism intraslab gmpe 2 vertices Poulos_SeismicHazard.mat 6
-zone7 type area mechanism intraslab gmpe 2 vertices Poulos_SeismicHazard.mat 7
+geometry 1
+area4 zone1 interface normal wc1994 0 1 zone1.mat 25
+area4 zone2 interface normal wc1994 0 1 zone2.mat 25
+area4 zone3 interface normal wc1994 0 1 zone3.mat 25
+area4 zone4 intraslab normal wc1994 0 2 zone4.mat 25
+area4 zone5 intraslab normal wc1994 0 2 zone5.mat 25
+area4 zone6 intraslab normal wc1994 0 2 zone6.mat 25
+area4 zone7 intraslab normal wc1994 0 2 zone7.mat 25
 
 Option 3 - GMPE Library
-at1  handle Youngs1997 mechanism interface                                 sigma truncate 3
-at2  handle Youngs1997 mechanism intraslab                                 sigma truncate 3
-at3  handle Zhao2006 mechanism interface                                   sigma truncate 3
-at4  handle Zhao2006 mechanism intraslab                                   sigma truncate 3
-at5  handle BCHydro2012 mechanism interface region Forearc DeltaC1 Central sigma truncate 3
-at6  handle BCHydro2012 mechanism intraslab region Forearc DeltaC1 Central sigma truncate 3
-at7  handle MontalvaBastias2017 mechanism interface region Forearc         sigma truncate 3
-at8  handle MontalvaBastias2017 mechanism intraslab region Forearc         sigma truncate 3
-at9  handle Idini2016 mechanism interface spectrum sI                      sigma truncate 3
-at10 handle Idini2016 mechanism intraslab spectrum sI                      sigma truncate 3
+gmm at1  Youngs1997 interface
+gmm at2  Youngs1997 intraslab
+gmm at3  Zhao2006 interface
+gmm at4  Zhao2006 intraslab
+gmm at5  BCHydro2012 interface Forearc Central
+gmm at6  BCHydro2012 intraslab Forearc Central
+gmm at7  MontalvaBastias2017 interface Forearc
+gmm at8 MontalvaBastias2017 intraslab Forearc
 
 Option 4 - GMPE GROUPS
-Youngs 1997      pointers 1   2  
-Zhao 2006        pointers 3   4  
-Abrahamson 2012  pointers 5   6  
-Montalva 2017    pointers 7   8  
-Idini 2016       pointers 9   10 
+gmmgroup Youngs1997      1  2   
+gmmgroup Zhao2006        3  4 
+gmmgroup Abrahamson2012  5  6 
+gmmgroup Montalva2017    7  8
 
 Option 5 - MAGNITUDE SCALING RELATIONS
 seismicity 1 Poulos
-zone1 handle truncexp NMmin  6.3096 bvalue 0.8700 Mmin 5 Mmax 9.2 
-zone2 handle truncexp NMmin  9.1201 bvalue 0.8800 Mmin 5 Mmax 9.3 
-zone3 handle truncexp NMmin  2.5704 bvalue 0.7700 Mmin 5 Mmax 9.6 
-zone4 handle truncexp NMmin  4.0738 bvalue 0.9000 Mmin 5 Mmax 8.6 
-zone5 handle truncexp NMmin 14.7911 bvalue 1.0400 Mmin 5 Mmax 8.4 
-zone6 handle truncexp NMmin  3.7154 bvalue 1.1100 Mmin 5 Mmax 8.4 
-zone7 handle truncexp NMmin  2.6303 bvalue 0.9800 Mmin 5 Mmax 8.5  
+truncexp zone1 NM 6.3096 0.8700 5 9.2
+truncexp zone2 NM 9.1201 0.8800 5 9.3
+truncexp zone3 NM 2.5704 0.7700 5 9.6
+truncexp zone4 NM 4.0738 0.9000 5 8.6
+truncexp zone5 NM 4.7911 1.0400 5 8.4
+truncexp zone6 NM 3.7154 1.1100 5 8.4
+truncexp zone7 NM 2.6303 0.9800 5 8.5
 
-Option 6 - RUPTURE AREA
-zone1 type circular spacing 40 nref 1 RA custom 1 4 0 taper false 
-zone2 type circular spacing 40 nref 1 RA custom 1 4 0 taper false 
-zone3 type circular spacing 40 nref 1 RA custom 1 4 0 taper false 
-zone4 type circular spacing 40 nref 1 RA custom 1 4 0 taper false 
-zone5 type circular spacing 40 nref 1 RA custom 1 4 0 taper false 
-zone6 type circular spacing 40 nref 1 RA custom 1 4 0 taper false 
-zone7 type circular spacing 40 nref 1 RA custom 1 4 0 taper false 
+Option 6 - Pre defined sites
+LasCondes -70.5635 -33.4124 691.3   VS30 NaN
 
-Option 7 - Pre defined sites
-source 760                                 
-Viaducto1  -22.458785 -68.862041 0 Vs30 500
-Viaducto2  -22.458785 -68.862041 0 Vs30 829
+Option 7 - Spacial distributed data
+layer VS30 CHI_USGS.mat 760

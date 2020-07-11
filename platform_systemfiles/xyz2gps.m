@@ -13,5 +13,5 @@ else
     inDegrees = false;
     [lon, rho] = cart2pol(x,y);
     [lat, h] = map.geodesy.internal.cylindrical2geodetic(rho, z, a, f, inDegrees);
-    vertices = [lat*180/pi lon*180/pi h];
+    vertices = [lon*180/pi lat*180/pi h];
 end

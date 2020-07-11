@@ -1,11 +1,11 @@
 function varargout = UHS(varargin)
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
-                   'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @UHS_OpeningFcn, ...
-                   'gui_OutputFcn',  @UHS_OutputFcn, ...
-                   'gui_LayoutFcn',  [] , ...
-                   'gui_Callback',   []);
+    'gui_Singleton',  gui_Singleton, ...
+    'gui_OpeningFcn', @UHS_OpeningFcn, ...
+    'gui_OutputFcn',  @UHS_OutputFcn, ...
+    'gui_LayoutFcn',  [] , ...
+    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
     gui_State.gui_Callback = str2func(varargin{1});
 end
@@ -17,32 +17,26 @@ else
 end
 
 function UHS_OpeningFcn(hObject, eventdata, handles, varargin)
-
 handles.Engine.CData         = double(imread('Engine.jpg'))/255;
 handles.Exit_button.CData    = double(imread('Exit.jpg'))/255;
 handles.ax1Limits.CData      = double(imread('Limits.jpg'))/255;
 handles.compute_uhs.CData    = double(imread('Play.jpg'))/255;
+handles.undock.CData      = double(imread('Undock.jpg'))/255;
 handles.clear_analysis.CData = double(imresize(imread('delete.jpg'),[16 16]))/255;
 
-handles.output    = hObject;
 handles.sys       = varargin{1};
-handles.model     = varargin{2};
-handles.opt       = varargin{3};
-handles.h         = varargin{4};
-
-%prepare model for UHS
-handles.isREGULAR = find(horzcat(handles.model.isregular)==1);
-handles.isPCE     = find(horzcat(handles.model.isregular)==0);
+handles.opt       = varargin{2};
+handles.h         = varargin{3};
+handles.opt.SourceDeagg='off';
 
 % ------------ REMOVES PCE MODELS (AT LEAST FOR NOW) ----------------------
-isREGULAR = handles.isREGULAR;
-handles.model = handles.model(isREGULAR); 
-[~,B]=setdiff(handles.sys.BRANCH(:,2),isREGULAR);
+isREG = handles.sys.isREG;
+[~,B]=setdiff(handles.sys.branch(:,2),isREG);
 if ~isempty(B)
-    handles.sys.BRANCH(B,:)=[];
-    handles.sys.WEIGHT(B,:)=[];
-    handles.sys.WEIGHT(:,4)=handles.sys.WEIGHT(:,4)/sum(handles.sys.WEIGHT(:,4));
-    warndlg('PCE Models removed from logic tree. Weights re-normalized')
+    handles.sys.branch(B,:)=[];
+    handles.sys.weight(B,:)=[];
+    handles.sys.weight(:,5)=handles.sys.weight(:,5)/sum(handles.sys.weight(:,5));
+    warndlg('PCE Models removed from logic tree. Logic Tree weights were normalized')
     uiwait
 end
 % -------------------------------------------------------------------------
@@ -51,20 +45,19 @@ set(handles.select_site,'string',handles.h.id);
 handles.figure1.Name=[handles.sys.filename, ' - Uniform Hazard Spectrum'];
 
 Tmax = [];
-for i=1:length(handles.model)
-   for j=1:length(handles.model(i).source) 
-       T    = handles.model(i).source(j).gmpe.T;
-       Tmax = [Tmax;max(T)]; %#ok<AGROW>
-   end
+gptr = unique(unique(handles.sys.gmmptr(:)))';
+for i=gptr
+    Tmax = [Tmax;max(handles.sys.gmmlib(i).T)]; %#ok<AGROW>
 end
 Tmax  = min(Tmax);
 handles.Tmax = Tmax;
-tlist = unique([0.01:0.01:0.1,0.1:0.1:1,1:1:10]);
+tlist = unique([0.01:0.01:0.1,0.1:0.1:1,1:1:10,Tmax]);
 tlist(tlist>Tmax)=[];
 handles.defaultperiods = tlist;
 handles.Tlist.String = num2cell(tlist);
 
-handles.param=[1 0 0 50 1]; 
+Nbranch = size(handles.sys.branch,1);
+handles.param=[1 0 0 50 1 Nbranch 1 1];
 guidata(hObject, handles);
 % uiwait(handles.figure1);
 
@@ -82,11 +75,12 @@ function figure1_CloseRequestFcn(hObject, eventdata, handles)
 delete(hObject);
 
 function select_site_Callback(hObject, eventdata, handles) %#ok<*DEFNU>
-if ~isempty(handles.UHS)
-    plot_UHS_spec(handles)
+if isfield(handles,'UHS') 
+    handles=rmfield(handles,{'UHS','lambda'});
+    delete(findall(handles.ax1,'type','line'))
 end
- guidata(hObject, handles);
- 
+guidata(hObject, handles);
+
 function select_site_CreateFcn(hObject, eventdata, handles) %#ok<*INUSD>
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
@@ -96,32 +90,30 @@ function compute_uhs_Callback(hObject, eventdata, handles)
 
 % this change is to accomodate the latest V-PSHA capabilities
 % ----------------------------------------------------------------
-im        = logsp(0.0001,10,50)';
-site      = handles.h.p;
+im        = logsp(0.0001,10,25)';
 Tdof      = sort(str2double(handles.Tlist.String));
 handles.opt.IM = Tdof;
 handles.opt.im = repmat(im,1,length(Tdof));
 % ----------------------------------------------------------------
+handles.site_selection=1;
+val     = handles.select_site.Value;
+h.id    = handles.h.id{val};
+h.p     = handles.h.p(val,:);
+h.param = handles.h.param;
+h.value = handles.h.value(val,:);
 
-handles.site_selection=1:size(site,1);
-if isfield(handles,'lambda')
-    lambda    = handles.lambda;
-else
-    lambda    = runlogictree1(handles.sys,handles.model,handles.opt,handles.h,handles.site_selection);
-    lambda    = nansum(lambda,4);
-    lambda    = permute(nansum(lambda,4),[1,2,3,5,4]);
-    handles.lambda = lambda;
+if ~isfield(handles,'lambda')
+    handles.lambda    = runlogictree1(handles.sys,handles.opt,h,handles.site_selection);
+    handles.lambda    = permute(handles.lambda,[1,2,3,5,4]);
 end
 hazlevel  = 1./str2double(handles.ReturnPeriod.String);
-[Nsite,~,NIM,Nbranches] = size(lambda);
-handles.UHS = zeros(Nsite,NIM,Nbranches);
+[~,~,NIM,Nbranches] = size(handles.lambda);
+handles.UHS = zeros(NIM,Nbranches);
 set(handles.figure1,'Pointer','watch');
-for i=1:Nsite
-    for j=1:Nbranches
-        lij = permute(lambda(i,:,:,j),[2,3,1]);
-        uhs = uhspectrum(im,lij,hazlevel);
-        handles.UHS(i,:,j) = uhs;
-    end
+for j=1:Nbranches
+    lij = permute(handles.lambda(1,:,:,j),[2,3,1]);
+    uhs = uhspectrum(im,lij,hazlevel);
+    handles.UHS(:,j) = uhs;
 end
 set(handles.figure1,'Pointer','arrow');
 plot_UHS_spec(handles)
@@ -132,49 +124,63 @@ function plot_UHS_spec(handles)
 if ~isfield(handles,'UHS')
     return
 end
-param = handles.param;
-site_ptr = get(handles.select_site,'value');
-uhs = permute(handles.UHS(site_ptr,:,:),[2,3,1]);
+param    = handles.param;
+uhs      = handles.UHS;
 delete(findall(handles.ax1,'tag','uhs'))
+mod1     = param(8);
 
-switch param(5)
-    case 1
-        Ny = size(uhs,2);
-        c1 = [0.7660    0.6740    0.1880];
-        c2 = [0.3010    0.7450    0.9330];
-        handles.ax1.ColorOrder= [linspace(c1(1),c2(1),Ny)',linspace(c1(2),c2(2),Ny)',linspace(c1(3),c2(3),Ny)'];
-        plot(handles.ax1,handles.opt.IM,uhs,'-','tag','uhs');
-    case 0
+if mod1
+    switch param(5)
+        case 1
+            Ny = size(uhs,2);
+            c1 = [0.7660    0.6740    0.1880];
+            c2 = [0.3010    0.7450    0.9330];
+            handles.ax1.ColorOrder= [linspace(c1(1),c2(1),Ny)',linspace(c1(2),c2(2),Ny)',linspace(c1(3),c2(3),Ny)'];
+            plot(handles.ax1,handles.opt.IM,uhs,'-','tag','uhs');
+        case 0
+    end
+    
+    % mean UHS
+    if param(1)==1
+        weight = handles.sys.weight(:,5)';
+        uhsm   = prod(bsxfun(@power,uhs,weight),2);
+        legstr = 'Default Weights';
+    elseif param(2)==1
+        weight = rand(size(handles.sys.branch(:,1)'));
+        weight = weight/sum(weight);
+        uhsm   = prod(bsxfun(@power,uhs,weight),2);
+        legstr = 'Random Weights';
+    elseif param(3)==1
+        per = param(4);
+        uhsm  = prctile(uhs,per,2);
+        legstr = sprintf('Percentile %g',per);
+    end
+    plot(handles.ax1,handles.opt.IM,uhsm,'-','color',[0 0.447 0.741],'linewidth',2,'tag','uhs');
+    xlabel('Period (s)')
+    ylabel('Sa (g)')
+    
+    switch param(5)
+        case 1
+            Nbranch = size(handles.sys.branch,1);
+            LL=legend([compose('Branch%i',1:Nbranch),legstr]); LL.Box='off';
+        case 0
+            LL=legend(legstr); LL.Box='off';
+    end
 end
 
-% mean UHS
-if param(1)==1
-    weight = handles.sys.WEIGHT(:,4)';
-    uhsm   = prod(bsxfun(@power,uhs,weight),2);
-    legstr = 'Default Weights';
-elseif param(2)==1
-    weight = rand(size(handles.sys.WEIGHT(:,4)'));
-    weight = weight/sum(weight);
-    uhsm   = prod(bsxfun(@power,uhs,weight),2);
-    legstr = 'Random Weights';
-elseif param(3)==1
-    per = param(4);
-    uhsm  = prctile(uhs,per,2);
-    legstr = sprintf('Percentile %g',per);
+if ~mod1
+    val = param(7);
+    plot(handles.ax1,handles.opt.IM,uhs(:,val),'-','color',[0 0.447 0.741],'linewidth',2,'tag','uhs');
+    LL=legend(sprintf('Branch %g',val)); LL.Box='off';
 end
-plot(handles.ax1,handles.opt.IM,uhsm,'-','color',[0 0.447 0.741],'linewidth',2,'tag','uhs');
-xlabel('Period (s)')
-ylabel('Sa (g)')
-
-switch param(5)
-    case 1,LL=legend({handles.model.id,legstr}); LL.Box='off';
-    case 0,LL=legend(legstr); LL.Box='off';
-end
-
 % uicontext
 cF=get(0,'format');
 format long g
-num = [handles.opt.IM(:),[uhs,uhsm]];
+if mod1
+    num = [handles.opt.IM(:),[uhs,uhsm]];
+else
+    num = [handles.opt.IM(:),uhs(:,val)];
+end
 data = num2cell(num);
 c = uicontextmenu;
 uimenu(c,'Label','Copy data','Callback'          ,{@data2clipboard_uimenu,data});
@@ -193,7 +199,7 @@ f = size(data,1);
 for i=1:f
     if data{i,1}<=0 , data{i,1}=[];end
     if data{i,1}>100, data{i,1}=[];end
-    if data{i,2}<=0 , data{i,2}=[];end    
+    if data{i,2}<=0 , data{i,2}=[];end
     data{i,3}=[];
     
 end
@@ -207,12 +213,12 @@ end
 data0 = cell2mat(data0);
 
 % number of entered rows
-ind = find(prod(data0(:,1:2),2)); 
+ind = find(prod(data0(:,1:2),2));
 
 if isempty(ind)
-   set(hObject,'data',data);
-   set(handles.compute_uhs,'enable','off')
-   return 
+    set(hObject,'data',data);
+    set(handles.compute_uhs,'enable','off')
+    return
 end
 
 
@@ -361,7 +367,6 @@ if isfield(handles,'UHS')
 end
 guidata(hObject,handles);
 
-
 % --- Executes on button press in ax1Limits.
 function ax1Limits_Callback(hObject, eventdata, handles)
 handles.ax1=ax2Control(handles.ax1);
@@ -376,3 +381,6 @@ function Engine_Callback(hObject, eventdata, handles)
 handles.param = UHSOptions(handles.param);
 plot_UHS_spec(handles);
 guidata(hObject,handles)
+
+function undock_Callback(hObject, eventdata, handles)
+figure2clipboard_uimenu(hObject, eventdata,handles.ax1)

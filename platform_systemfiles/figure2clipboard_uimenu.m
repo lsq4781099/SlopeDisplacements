@@ -17,8 +17,9 @@ if strcmp(get(gca,'xscale'),'linear') && strcmp(get(gca,'yscale'),'linear')
 end
 
 try
-    L=legend;
-    L.Box='off';
+%     L=legend;
+%     L.Box='off';
+%     L.Visible='off';
 catch
 end
 

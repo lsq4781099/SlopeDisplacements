@@ -28,7 +28,7 @@ handles.correlationmodel.String={methods.label};
 
 %% populate fields
 handles.default_Tcss  = [0.010;0.050;0.075;0.100;0.150;0.200;0.250;0.300;0.400;0.500;0.750;1.000;1.500;2.000];
-handles.default_AEP   = [0.01;0.0045;0.002;0.001;0.00025;0.0001;4e-05;6e-06;1e-06;1e-07;1e-08];
+handles.default_AEP   = logsp(1,1e-6,10)';
 if nargin>4
     param = varargin{1};
     Tcss  = varargin{2};
@@ -42,7 +42,7 @@ if nargin>4
     handles.correlationmodel.Value = corrV;
     handles.locate_flatfile.String = flatfile;
 else
-    param = {2,'1','0.01 - 2','0.04 - 0.4','2 - 8',1,'0 - 1000','150 - 3000','5 - 150','0 - 3000','0 - 1000','32','1000','700 - 0.01','100'};
+    param = {2,'1','0.01 - 2','0.04 - 0.4','5.5 - 8',1,'0 - 1000','350 - 1350','5 - 150','0 - 3000','0 - 1000','32','1000','700 - 0.01','100'};
     handles.Nper.String=sprintf('%g',length(handles.default_Tcss));
     handles.Nhaz.String=sprintf('%g',length(handles.default_AEP));
     handles.tb1.Data=num2cell(handles.default_Tcss);
@@ -283,5 +283,5 @@ handles.tb1.Data = num2cell(data);
 function tb2_ButtonDownFcn(hObject, eventdata, handles)
 
 data = cell2mat(handles.tb2.Data);
-data = logsp(max(data),min(data),length(data))';
+data = logsp(data(1),data(end),length(data))';
 handles.tb2.Data = num2cell(data);

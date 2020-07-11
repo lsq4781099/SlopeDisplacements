@@ -1,4 +1,4 @@
-function[rjb,x]=dist_rjb4(r0,rf,RW,RL,geom,ellipsoid)
+function[rjb]=dist_rjb4(r0,rf,RW,RL,geom,ellipsoid)
 %------------------------------------------------------------------------
 % rjb   = Joyner-Boore distance, i.e., closest distance from site to
 %         surface projection of rupture area
@@ -30,7 +30,7 @@ y1      = rfc(:,2)-RW/2;
 y2      = rfc(:,2)+RW/2;
 Nx      = size(x1,1);
 z       = zeros(Nx,1);
-x       = zeros(Nx,3);
+% x       = zeros(Nx,3);
 rjb     = zeros(Nx,1);
 
 % corners of Rupture Area in local cartesian coordinates
@@ -46,10 +46,10 @@ corner3XYZ = bsxfun(@plus,corner3*rot',pmean);
 corner4XYZ = bsxfun(@plus,corner4*rot',pmean);
 
 % corners of Rupture Area in WGS84 coordinates
-corner1GPS = xyz2gps(corner1XYZ,ellipsoid);
-corner2GPS = xyz2gps(corner2XYZ,ellipsoid);
-corner3GPS = xyz2gps(corner3XYZ,ellipsoid);
-corner4GPS = xyz2gps(corner4XYZ,ellipsoid);
+corner1GPS = xyz2gpsO(corner1XYZ,ellipsoid);
+corner2GPS = xyz2gpsO(corner2XYZ,ellipsoid);
+corner3GPS = xyz2gpsO(corner3XYZ,ellipsoid);
+corner4GPS = xyz2gpsO(corner4XYZ,ellipsoid);
 
 % corners of Rupture Area Projection in WGS84 coordinates
 project1GPS = corner1GPS(:,1:2);
@@ -57,7 +57,7 @@ project2GPS = corner2GPS(:,1:2);
 project3GPS = corner3GPS(:,1:2);
 project4GPS = corner4GPS(:,1:2);
 
-r0xyz = xyz2gps(r0,ellipsoid);
+r0xyz = xyz2gpsO(r0,ellipsoid);
 r0xyz = r0xyz(1:2);
 
 for i=1:Nx
@@ -67,18 +67,18 @@ for i=1:Nx
         project4GPS(i,:)];
     [d,x_poly,y_poly] = p_turbo_dist(r0xyz(1),r0xyz(2), pv(:,1),pv(:,2));
     if d>0
-        r1 = gps2xyz([x_poly,y_poly,0],ellipsoid);
+        r1 = gps2xyzO([x_poly,y_poly,0],ellipsoid);
         rjb(i)=sum((r0-r1).^2).^0.5;
     end
-    x(i,1)=x_poly;
-    x(i,2)=y_poly;
+%     x(i,1)=x_poly;
+%     x(i,2)=y_poly;
 end
 
 
 %%
 % CornerGPS  = [corner1GPS(1,:);corner2GPS(1,:);corner3GPS(1,:);corner4GPS(1,:);corner1GPS(1,:)];
 % ProjectGPS = [project1GPS(1,:);project2GPS(1,:);project3GPS(1,:);project4GPS(1,:);project1GPS(1,:)];
-% r0GPS      = xyz2gps(r0,ellipsoid);
+% r0GPS      = xyz2gpsO(r0,ellipsoid);
 %
 % figure,hold on
 % vert = geom.vertices;
@@ -86,7 +86,7 @@ end
 % plot3(CornerGPS(:,1),CornerGPS(:,2),CornerGPS(:,3),'r.-')
 % plot3(ProjectGPS(:,1),ProjectGPS(:,2),ProjectGPS(:,3),'m.-')
 % plot3(r0GPS(:,1),r0GPS(:,2),r0GPS(:,3),'ko','markerfacecolor','k')
-% rfGPS = xyz2gps(rf,ellipsoid);
+% rfGPS = xyz2gpsO(rf,ellipsoid);
 % plot3(rfGPS(1,1),rfGPS(1,2),rfGPS(1,3),'ko')
 % %
 % text(vert([1:4,1],1),vert([1:4,1],2),vert([1:4,1],3),{'1','2','3','4',''})
@@ -98,7 +98,7 @@ end
 % ProjectXYZ = [project1XYZ(1,:);project2XYZ(1,:);project3XYZ(1,:);project4XYZ(1,:);project1XYZ(1,:)];
 % r0XYZ      = r0;
 % vert = geom.vertices;
-% vertXYZ    = gps2xyz(vert,ellipsoid);
+% vertXYZ    = gps2xyzO(vert,ellipsoid);
 % close all
 % figure,hold on
 % plot3(vertXYZ([1:4,1],1),vertXYZ([1:4,1],2),vertXYZ([1:4,1],3),'b.-')

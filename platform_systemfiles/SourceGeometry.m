@@ -20,18 +20,21 @@ handles.output    = hObject;
 ihandles          = varargin{1};
 
 icon = double(imread('exit.jpg'))/255; set(handles.Exit_button,   'CData',icon);
-icon = double(imresize(imread('Closed_Lock.jpg')  ,0.7))/255; set(handles.Unlock  , 'CData',icon);
 icon = double(imresize(imread('Ruler.jpg'),[16 16]))/255;     set(handles.setXYLimits,'CData',icon);
 
 handles.opt       = ihandles.opt;
-handles.model     = ihandles.model;
 handles.sys       = ihandles.sys;
-handles.ax1=copyobj(ihandles.ax1, handles.figure1);
+copyobj(findall(ihandles.ax1,'tag','gmap'), handles.ax1);
+copyobj(findall(ihandles.ax1,'tag','shape1'), handles.ax1);
+copyobj(findall(ihandles.ax1,'tag','shape2'), handles.ax1);
 
-delete(findall(handles.ax1,'tag','siteplot'));
-delete(findall(handles.ax1,'tag','areas'));
-delete(findall(handles.ax1,'tag','lines'));
-delete(findall(handles.ax1,'tag','points'));
+ch=findall(handles.ax1,'tag','gmap');   if ~isempty(ch),ch.Visible='off';end
+ch=findall(handles.ax1,'tag','shape1'); if ~isempty(ch),ch.Visible='on';end
+ch=findall(handles.ax1,'tag','shape2'); if ~isempty(ch),ch.Visible='off';end
+
+handles.ax1.DataAspectRatio=ihandles.ax1.DataAspectRatio;
+handles.ax1.XLim=ihandles.ax1.XLim;
+handles.ax1.YLim=ihandles.ax1.YLim;
 
 if isempty(handles.opt.ellipsoid.Code)
     xlabel(handles.ax1,'X (km)','fontsize',8,'fontname','arial');
@@ -43,46 +46,63 @@ else
     handles.tabla.ColumnName(1:3)={'Lat';'Lon';'Depth'};
 end
 
-[~,geomlist] = unique(handles.sys.BRANCH(:,1));
-set(handles.source_pop,'string',{handles.model(geomlist).id1}','value',1,'enable','on')
-model = handles.model(geomlist);
-set(handles.source_list,'string',{model(1).source.label}','value',1,'enable','on');
+Ngeom = size(handles.sys.Nsrc,2);
+set(handles.po_region,'string',compose('Geometry %g',1:Ngeom)','value',1,'enable','on')
+set(handles.source_list,'string',handles.sys.labelG{1},'value',1,'enable','on');
+plot_geometry_PSHA(handles.ax1,handles.sys,handles.opt);
+ngeom = length(handles.sys.src1);
+for i=1:ngeom
+    if i==handles.po_region.Value
+        tag = sprintf('edge%g',i); ch  = findall(handles.ax1,'tag',tag); set(ch,'visible','on');
+        tag = sprintf('mesh%g',i); ch  = findall(handles.ax1,'tag',tag); set(ch,'visible','on');
+    else
+        tag = sprintf('edge%g',i); ch  = findall(handles.ax1,'tag',tag); set(ch,'visible','off');
+        tag = sprintf('mesh%g',i); ch  = findall(handles.ax1,'tag',tag); set(ch,'visible','off');
+    end
+end
 
-handles.tabla.Data=num2cell(model(1).source(1).vertices);
-handles.model = model;
-plotsources(handles);
-source_param(handles);
-akZoom(handles.ax1);
-
-view(handles.ax2,[34 40])
-% rotate3d(handles.ax2); % rhis line creates congflict with akZoom on ax1
-guidata(hObject, handles);
+plot_geometry_PSHA_single(handles);
+rotate3d(handles.ax2);
+xlabel(handles.ax2,'X(km)','fontsize',8)
+ylabel(handles.ax2,'Y(km)','fontsize',8)
+zlabel(handles.ax2,'Z(km)','fontsize',8)
+handles.ax2.Color='none';
 grid(handles.ax2,'off');
-uiwait(handles.figure1);
+handles.ax1.Layer='top';
+guidata(hObject, handles);
+% uiwait(handles.figure1);
 
 function varargout = SourceGeometry_OutputFcn(hObject, eventdata, handles)
 
 varargout{1}=[];
-delete(handles.figure1)
+% delete(handles.figure1)
 
-function source_pop_Callback(hObject, eventdata, handles) %#ok<*DEFNU>
-ch = findall(handles.ax1,'Tag','sourcepoint');delete(ch);
-val = get(hObject,'value');
-model = handles.model;
-set(handles.source_list,'string',{model(val).source.label}','enable','on','value',1);
-plotsources(handles);
-source_param(handles);
+function po_region_Callback(hObject, eventdata, handles) %#ok<*DEFNU>
+
+ngeom = length(handles.sys.src1);
+for i=1:ngeom
+    if i==handles.po_region.Value
+        tag = sprintf('edge%g',i); ch  = findall(handles.ax1,'tag',tag); set(ch,'visible','on');
+        tag = sprintf('mesh%g',i); ch  = findall(handles.ax1,'tag',tag); set(ch,'visible','on');
+    else
+        tag = sprintf('edge%g',i); ch  = findall(handles.ax1,'tag',tag); set(ch,'visible','off');
+        tag = sprintf('mesh%g',i); ch  = findall(handles.ax1,'tag',tag); set(ch,'visible','off');
+    end
+end
+
+% update source list
+handles.source_list.Value=1;
+handles.source_list.String=handles.str{handles.po_region.Value};
+plot_geometry_PSHA_single(handles);
 guidata(hObject, handles);
 
-function source_pop_CreateFcn(hObject, eventdata, handles) %#ok<*INUSD>
+function po_region_CreateFcn(hObject, eventdata, handles) %#ok<*INUSD>
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
 function source_list_Callback(hObject, eventdata, handles)
-plotsources(handles);
-source_param(handles);
-guidata(hObject, handles);
+plot_geometry_PSHA_single(handles);
 
 function source_list_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -95,115 +115,25 @@ close(handles.figure1)
 function Exit_Callback(hObject, eventdata, handles)
 close(handles.figure1);
 
-function plotsources(handles)
-facecolor  = [0.8 0.6 0.6];
-edgecolor  = [1 0.6 0.6];
-delete(findall(handles.ax1,'Tag','Sources'));
-delete(findall(handles.ax2,'Tag','Sources'));
-pop   = get(handles.source_pop,'value');
-val   = get(handles.source_list,'value');
-model = handles.model(pop);
-
-vertices = model.source(val).vertices;
-if size(model.source(val).geom.conn,2)>2
-    patch('parent',handles.ax1,...
-        'vertices',vertices(:,[2,1]),...
-        'faces',1:size(vertices,1),...
-        'facecolor',facecolor,...
-        'edgecol',edgecolor,...
-        'facealpha',0.5,...
-        'tag','Sources',...
-        'visible','on');
-end
-xlabel(handles.ax2,'Lon°','fontsize',10);
-ylabel(handles.ax2,'Lat°','fontsize',10);
-zlabel(handles.ax2,'z (km)','fontsize',10);
-
-
-Area  = model.source(val).geom.Area;
-Lchar = sqrt(Area);
-zscale = max(Lchar,100);
-handles.ax2.DataAspectRatio = [1 1 zscale];
-
-%vert  = vertices(:,[2,1,3]);
-vert   = xyz2gps(model.source(val).geom.xyzm,handles.opt.ellipsoid);vert=vert(:,[2,1,3]);
-
-handles.ax2.NextPlot='add';
-axis(handles.ax2,'auto');
-
-patch('parent',handles.ax2,...
-    'vertices',vert,...
-    'faces',model.source(val).geom.conn,...
-    'facecolor',facecolor,...
-    'edgecol',edgecolor,...
-    'facealpha',0.5,...
-    'tag','Sources',...
-    'visible','on');
-
-handles.ax2.Layer='top';
-vertices = zeros(0,3);NAN3 = NaN(1,3);
-for j=1:length(model.source)
-    vertices_j =model.source(j).vertices;
-    vertices =[vertices;vertices_j;vertices_j(1,:);NAN3]; %#ok<AGROW>
-end
-conn = 1:size(vertices,1);
-patch('parent',handles.ax1,...
-    'vertices',vertices(:,[2,1]),...
-    'faces',conn,...
-    'facecolor','none',...
-    'edgecol',edgecolor,...
-    'tag','Sources',...
-    'visible','on');
-
-axis(handles.ax2,'auto');
-
-function source_param(handles)
-pop   = get(handles.source_pop,'value');
-val   = get(handles.source_list,'value');
-source = handles.model(pop).source;
-set(handles.tabla,'data',source(val).vertices);
-
 function tabla_CellSelectionCallback(hObject, eventdata, handles)
 delete(findall(handles.ax1,'Tag','sourcepoint'));
 delete(findall(handles.ax2,'Tag','sourcepoint'));
 if isempty(eventdata.Indices)
     return
 end
-vertices = get(hObject,'data');
+vertices = cell2mat(hObject.Data);
 ind = eventdata.Indices(1);
-plot(handles.ax1,vertices(ind,2),vertices(ind,1),'ko','markersize',5,'Tag','sourcepoint','markerfacecolor',[0.85 0.325 0.098]);
+plot(handles.ax1,vertices(ind,1),vertices(ind,2),'ko','markersize',5,'Tag','sourcepoint','markerfacecolor',[0.85 0.325 0.098]);
 
-handles.ax2.NextPlot='add';
-plot3(handles.ax2,vertices(ind,2),vertices(ind,1),vertices(ind,3),'ko','markersize',5,'Tag','sourcepoint','markerfacecolor',[0.85 0.325 0.098]);
+vertices = gps2xyz(vertices,handles.opt.ellipsoid);
+plot3(handles.ax2,vertices(ind,1),vertices(ind,2),vertices(ind,3),'ko','markersize',5,'Tag','sourcepoint','markerfacecolor',[0.85 0.325 0.098]);
 guidata(hObject, handles);
-
-function Unlock_Callback(hObject, eventdata, handles)
-return % temporarily disbled
-
-% switch get(hObject,'TooltipString')
-%     case 'Unlocked'
-%         set(hObject,'TooltipString','Locked')
-%         icon2 = double(imresize(imread('Closed_Lock.jpg')  ,0.7))/255; set(handles.Unlock  , 'CData',icon2);
-%         col = [    1.0000    1.0000    1.0000;0.9608    0.9608    0.9608];
-%         set(handles.tabla,'ColumnEditable',false(1,3),'backgroundcolor',col)
-%         set(handles.source_list,'enable','on')
-%         set(handles.source_pop,'enable','on')
-%     case 'Locked'
-%         set(hObject,'TooltipString','Unlocked')
-%         icon2 = double(imresize(imread('Open_Lock.jpg')  ,0.7))/255; set(handles.Unlock  , 'CData',icon2);
-%         col = [1 1 0.7];
-%         set(handles.tabla,'ColumnEditable',true(1,3),'backgroundcolor',col)
-%         set(handles.source_list,'enable','off')
-%         set(handles.source_pop,'enable','off')
-% end
-% guidata(hObject, handles);
 
 function tabla_CellEditCallback(hObject, eventdata, handles)
 
 % store changes
-pop   = get(handles.source_pop,'value'); val   = get(handles.source_list,'value');
+pop   = get(handles.po_region,'value'); val   = get(handles.source_list,'value');
 handles.model(pop).source(val).vertices=get(handles.tabla,'data');
-plotsources(handles);
 
 ch=findall(handles.ax1,'Tag','sourcepoint');
 vertices = get(hObject,'data');
@@ -218,45 +148,77 @@ ch.ZData=vertices(ind(1),3);
 
 guidata(hObject,handles)
 
-function [Vertices,Faces]=vertcat2(sources,Code)
-
-Vertices = zeros(0,3);
-for i=1:length(sources)
-    Vertices=[Vertices;sources(i).vertices;nan(1,3)]; %#ok<AGROW>
-end
-Faces = 1:size(Vertices,1);
-
-if Code==0
-    Vertices=Vertices(:,[2,1]);
-end
-
 function figure1_CloseRequestFcn(hObject, eventdata, handles)
 
-if isequal(get(hObject,'waitstatus'),'waiting')
-    uiresume(hObject);
-else
-    delete(hObject);
-end
-% delete(hObject);
+% if isequal(get(hObject,'waitstatus'),'waiting')
+%     uiresume(hObject);
+% else
+%     delete(hObject);
+% end
+delete(hObject);
 
 function setXYLimits_Callback(hObject, eventdata, handles)
-akZoom(handles.ax1)
-guidata(hObject,handles)
 
 function File_Callback(hObject, eventdata, handles)
 
-function uibuttongroup1_SelectionChangedFcn(hObject, eventdata, handles)
+function checkbox2_Callback(hObject, eventdata, handles)
 
-switch eventdata.NewValue.String
-    case 'Plan View', view(handles.ax2,[0 90]); rotate3d(handles.ax2,'off')
-    case 'N-S'  ,     view(handles.ax2,[0 0]) ; rotate3d(handles.ax2,'off')
-    case 'E-W'  ,     view(handles.ax2,[90 0]); rotate3d(handles.ax2,'off')
-    case '3D'   ,     view(handles.ax2,[34 40]);rotate3d(handles.ax2,'on')
+function po_grid_Callback(hObject, eventdata, handles)
+val = hObject.Value;
+switch val
+    case 1, grid(handles.ax1,'on')
+    case 0, grid(handles.ax1,'off')
 end
 
-function radiobutton3_Callback(hObject, eventdata, handles)
-% hObject    handle to radiobutton3 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+function checkbox4_Callback(hObject, eventdata, handles)
 
-% Hint: get(hObject,'Value') returns toggle state of radiobutton3
+function po_terrain_Callback(hObject, eventdata, handles)
+ch=findall(handles.ax1,'tag','gmap');
+if isempty(ch)
+    return
+end
+switch hObject.Value
+    case 0, ch.Visible='off';
+    case 1, ch.Visible='on';
+end
+
+function po_boundaries_Callback(hObject, eventdata, handles)
+ch = findall(handles.ax1,'tag','shape1');
+val = hObject.Value;
+switch val
+    case 1, set(ch,'visible','on');
+    case 0, set(ch,'visible','off')
+end
+guidata(hObject,handles);
+
+function po_sourcemesh_Callback(hObject, eventdata, handles)
+
+i   = handles.po_region.Value;
+tag_mesh = sprintf('mesh%g',handles.po_region.Value);
+switch hObject.Value
+    case 1
+        ch=findall(handles.ax1,'tag',tag_mesh); set(ch,'visible','on');
+    case 0
+        ch=findall(handles.ax1,'tag',tag_mesh); set(ch,'visible','off');
+end
+guidata(hObject,handles);
+
+function po_layers_Callback(hObject, eventdata, handles)
+
+function po_sourcelabels_Callback(hObject, eventdata, handles)
+
+val = handles.po_region.Value;
+tag = sprintf('sourcetag%g',val);
+ch  = findall(handles.ax1,'tag',tag);
+switch hObject.Value
+    case 0, set(ch,'visible','off')
+    case 1, set(ch,'visible','on')
+end
+
+function Undock_Callback(hObject, eventdata, handles)
+
+function SincleSourceUndock_Callback(hObject, eventdata, handles)
+figure2clipboard_uimenu(hObject, eventdata,handles.ax2)
+
+function Allsources_Callback(hObject, eventdata, handles)
+figure2clipboard_uimenu(hObject, eventdata,handles.ax1)

@@ -1,16 +1,12 @@
-function[]=comparePEER(handles)
+function[]=comparePEER(validation,MRE,im,filename)
 
-IM         = handles.sys.IM;
-lambdaTest = handles.sys.lambdaTest;
+IM         = validation(1,:);
+lambdaTest = validation(2:end,:);
 lambdaTest(lambdaTest==0)=nan;
-im         = handles.opt.im';
-lambda     = nansum(handles.MRE,4);
+im         = im(:);
+lambda     = nansum(MRE,4);
 lambda(isnan(lambdaTest))=NaN;
-if numel(lambdaTest)~=numel(lambda)
-    return
-end
 Error      = abs((lambdaTest-lambda)./lambdaTest*100);
-% Error(lambdaTest==lambda)=0;
 Acc        = num2cell(Error<=5);
 for i=1:numel(Acc)
     if Acc{i}==1 || isinf(Error(i))
@@ -20,13 +16,13 @@ for i=1:numel(Acc)
     end
 end
 %%
-fname = which(handles.sys.filename);
+fname = which(filename);
 fname = strrep(fname,'.txt','.out');
 fileID = fopen(fname,'w');
 
 NN = sum(sum(~isnan(Error),1)>0);
 
-fprintf(fileID,'%s\n',handles.sys.filename);
+fprintf(fileID,'%s\n',filename);
 fprintf(fileID,'--------------------------------------------------------\n');
 fprintf(fileID,'Benchmark Solution\n');
 strpat = ['IM      ' repmat('%6.5e ',1,NN),'\n'];

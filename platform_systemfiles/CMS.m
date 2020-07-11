@@ -27,24 +27,27 @@ handles.opt         = varargin{2};
 handles.h           = varargin{3};
 handles.scenarios   = cell(0,9);
 handles.tessel      = {[],zeros(0,2)};
-handles.opt.MagDiscrete = {'uniform' 0.1};
-handles.model      = process_model(handles.sys,handles.opt);
-handles.isREGULAR  = find(horzcat(handles.model.isregular)==1);
-handles.isPCE      = find(horzcat(handles.model.isregular)==0);
+handles.opt.SourceDeagg='off';
+n=max(handles.sys.branch(:,3));
+for i=1:n
+    handles.sys.mrr2(i) = process_truncexp  (handles.sys.mrr2(i) , {'uniform' 0.1});
+    handles.sys.mrr3(i) = process_truncnorm (handles.sys.mrr3(i) , {'uniform' 0.1});
+    handles.sys.mrr4(i) = process_yc1985    (handles.sys.mrr4(i) , {'uniform' 0.1});
+end
+
 
 % ------------ REMOVES PCE MODELS (AT LEAST FOR NOW) ----------------------
-isREGULAR = handles.isREGULAR;
-handles.model = handles.model(isREGULAR);
-[~,B]=setdiff(handles.sys.BRANCH(:,2),isREGULAR);
+isREG = handles.sys.isREG;
+[~,B]=setdiff(handles.sys.branch(:,2),isREG);
 if ~isempty(B)
-    handles.sys.BRANCH(B,:)=[];
-    handles.sys.WEIGHT(B,:)=[];
-    handles.sys.WEIGHT(:,4)=handles.sys.WEIGHT(:,4)/sum(handles.sys.WEIGHT(:,4));
-    warndlg('PCE Models removed from logic tree. Weights were normalized')
+    handles.sys.branch(B,:)=[];
+    handles.sys.weight(B,:)=[];
+    handles.sys.weight(:,5)=handles.sys.weight(:,5)/sum(handles.sys.weight(:,5));
+    warndlg('PCE Models removed from logic tree. Logic Tree weights were normalized')
     uiwait
 end
-% -------------------------------------------------------------------------
 
+% -------------------------------------------------------------------------
 % Build interface to adjust this piece of code
 %--------------------------------------------------------------------------
 rmin  = 0;  rmax  = 600; dr    = 60;
@@ -53,14 +56,15 @@ mmin  = 5; mmax  = 9; dm    = 0.2;
 handles.Mbin      = [(mmin:dm:mmax-dm)',(mmin:dm:mmax-dm)'+dm];
 
 %% populate pop menus
+Nmodel = size(handles.sys.branch,1);
 set(handles.pop_site,'string',handles.h.id);
-set(handles.pop_branch,'string',{handles.model.id});
+set(handles.pop_branch,'string',compose('Branch %i',1:Nmodel));
 T = UHSperiods(handles);
 methods = pshatoolbox_methods(4);
 handles.spatial_model.String={methods.label};
 handles.spatial_model.Value = 3;
 
-if length(handles.model)==1
+if Nmodel==1
     handles.methodpop.String={'Method 1'};
 else
     handles.methodpop.String={'Method 1','Method 2','Method 3','Method 4'};

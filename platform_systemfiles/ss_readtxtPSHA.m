@@ -1,4 +1,4 @@
-function h = ss_readtxtPSHA(filename)
+function h = ss_readtxtPSHA(filename,VS30)
 
 fid = fopen(filename);
 data = textscan(fid,'%s','delimiter','\n');
@@ -27,7 +27,7 @@ if strcmp(newline,'Site Selection Tool')
     
     for kk=1:length(p)
        if length(p{kk})==4
-           p{kk}(5:6)={'Vs30',nan};
+           p{kk}(5:6)={'VS30',nan};
        end
     end
     p       = vertcat(p{:}); 
@@ -58,7 +58,7 @@ if strcmp(newline,'Site Selection Tool')
    
     h.id    = p(:,1);
     h.p     = str2double(p(:,2:4));
-    h.Vs30  = str2double(p(:,5));
+    h.VS30  = str2double(p(:,5));
     h.t     = t;
     h.shape = [];
 else
@@ -67,7 +67,7 @@ else
     
     h.id           = cell(Np,1);
     h.p            = zeros(Np,3);
-    h.Vs30         = zeros(Np,1);
+    h.VS30         = zeros(Np,1);
     h.t            = cell(0,2);
     h.shape        = [];
     
@@ -75,7 +75,9 @@ else
         h.id{i} = p{i}{1};
         h.p(i,:)= str2double(p{i}(2:4))*diag([1 1 1/1000]);
         if numel(p{i})==6
-            h.Vs30(i)  = str2double(p{i}(6));
+            h.VS30(i)  = str2double(p{i}(6));
+        else
+            h.VS30(i)  = getVs30(str2double(p{i}(2:3)),VS30);
         end
     end
 end

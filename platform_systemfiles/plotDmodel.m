@@ -17,7 +17,7 @@ for i=1:Nd
     s(i)= vout(2);
 end
 
-lnd(exp(lnd)<1e-3)=nan;
+lnd(exp(lnd)<1e-5)=nan;
 
 Neps = 1;
 x1 = im;  y1 = exp(lnd);
@@ -34,8 +34,9 @@ L=legend(handles.ax1,'d','d \pm \sigma');
 L.Box='off';
 L.Location='SouthEast';
 
-handles.ax1.YLim(1)=max(handles.ax1.YLim(1),0.1);
-handles.ax1.XLim(1)=0;
+handles.ax1.YLim=[0.001 2e2];
+handles.ax1.XLim=[handles.im_1,handles.im_2];
+
 
 handles.ch1=plot(handles.ax1,[implot implot],handles.ax1.YLim,'k--','tag','refline','handlevisibility','off');
 

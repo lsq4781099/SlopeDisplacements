@@ -1,47 +1,31 @@
-function[str]=field2str(str,varargin)
+function[str]=field2str(str)
 
 % fixes strings of IMs
-
-todelete = [];
-
-if size(str,1)==1 && contains(str{1},'logsp')
-    per = eval(str{1});
-    str = sprintfc('%g',per)';
-end
-
-if size(str,1)==1 && contains(str{1},'linpsace')
-    per = eval(str{1});
-    str = sprintfc('%g',per)';
-end
-
-for i=1:size(str,1)
-    stri = lower(str{i});
-    stri = strrep(stri,' ','');
-    stri = strrep(stri,'sa','');
-    stri = strrep(stri,'t','');
-    stri = strrep(stri,'o','');
-    stri = strrep(stri,'=','');
-    stri = strrep(stri,'(' ,'');
-    stri = strrep(stri,')' ,'');
-    switch stri
-        case {'-10','pgd'}     ,   str{i}='PGD';
-        case {'-1' ,'pgv'}     ,   str{i}='PGV';
-        case {'0'  ,'pga'}     ,   str{i}='PGA';
-        case {'-4'}            ,   str{i}='CAV';
-        case {'-5' ,'ia','ai'} ,   str{i}='AI';
-        otherwise
-            per = str2double(stri);
-            if per<0 || isnan(per)
-                todelete=[todelete;i]; %#ok<AGROW>
-            elseif per==0
-                str{i}='PGA';
-            else
-                str{i} = ['Sa(T=',stri,')'];
-            end
+N = length(str);
+str = strrep(str,' ','');
+NOTNAN=~isnan(str2double(str));
+for i=1:N
+    if NOTNAN(i)
+        switch str{i}
+            case '0'   , str{i}='PGA';
+            case '-1'  , str{i}='PGV';
+            case '-2'  , str{i}='PGD';
+            case '-3'  , str{i}='Duration';
+            case '-4'  , str{i}='CAV';
+            case '-5'  , str{i}='AI';
+            case '-6'  , str{i}='VGI';
+            otherwise
+                if     contains(str{i},'+1i'),  num = real(str2double(str{i})); str{i}=sprintf('SV(T=%g)' ,num);
+                elseif contains(str{i},'+2i'),  num = real(str2double(str{i})); str{i}=sprintf('SD(T=%g)' ,num);
+                elseif contains(str{i},'+3i'),  num = real(str2double(str{i})); str{i}=sprintf('H/V(T=%g)',num);
+                else
+                    num = real(str2double(str{i}));
+                    if num>0
+                        str{i}=sprintf('SA(T=%g)' ,num);
+                    else
+                        str{i}='Error';
+                    end
+                end
+        end
     end
-end
-str(todelete)=[];
-
-if nargin>1
-	str=str(1);
 end

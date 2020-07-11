@@ -11,4 +11,3 @@ T    = max(T,0.01); % PGA is treated as T=0.01;
 b    = 110*T^0.13;
 gama = 1-exp(-3*h/b);
 rho = 1-gama;
-

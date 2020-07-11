@@ -13,7 +13,7 @@ handles.e7.BackgroundColor=[1 1 1]; handles.e7.Enable='on';
 % handles.e11.BackgroundColor=[1 1 1]; handles.e1.Enable='on';
 % handles.e12.BackgroundColor=[1 1 1]; handles.e1.Enable='on';
 % handles.e13.BackgroundColor=[1 1 1]; handles.e1.Enable='on';
-% handles.e14.BackgroundColor=[1 1 1]; handles.e1.Enable='on';
+handles.e14.BackgroundColor=[1 1 1]; handles.e1.Enable='on';
 
 methods = pshatoolbox_methods(2);
 
@@ -94,8 +94,8 @@ switch methods(handles.MRselect.Value).str
         handles.e6.BackgroundColor=[1 1 1];
         handles.e7.BackgroundColor=[1 1 1];
         
-    case 'youngscoppersmith'
-        handles.fun=@youngscoppersmith;
+    case 'yc1985'
+        handles.fun=@yc1985;
         set(txt(1:6),'Visible','on');
         set(edi(1:6),'Visible','on');
         
@@ -119,4 +119,21 @@ switch methods(handles.MRselect.Value).str
         handles.e4.BackgroundColor=[1 1 0.7];
         handles.e5.BackgroundColor=[1 1 1];
         handles.e6.BackgroundColor=[1 1 1];
+        
+    case 'magtable'
+        handles.fun=@magtable;
+        set(txt(1:3),'Visible','on');
+        set(edi(1:2),'Visible','on');
+        set(edi(14),'Visible','on');
+        handles.t1.String='Mmin';
+        handles.t2.String='Mag binwidth';
+        handles.t3.String='Rate';
+        handles.e1.String='6.05';
+        handles.e2.String='0.1';
+        handles.e14.String={'4.7821e-04','3.9681e-04','3.2927e-04','2.7322e-04','2.2672e-04','1.8813e-04','1.5610e-04','1.2953e-04','1.0748e-04','8.9189e-05'};
+        handles.e1.BackgroundColor=[1 1 0.7];
+        handles.e2.BackgroundColor=[1 1 0.7];
+        handles.e14.BackgroundColor=[1 1 0.7];
+        
+        
 end

@@ -9,6 +9,15 @@ for i=1:nT
     Nmax=max(Nmax,length(T{i}));
 end
 
+% patch: fixes T values for PGA ambiguity
+for i=1:nT
+    if any(T{i}>=0)
+       [~,pos] = min(abs(T{i}));
+       T{i}(pos)=0;
+    end
+end
+
+
 Tbin = zeros(nT,Nmax);
 for i=1:nT
     ni = length(T{i});

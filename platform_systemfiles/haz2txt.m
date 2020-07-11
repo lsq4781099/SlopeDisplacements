@@ -1,19 +1,19 @@
-function[]=haz2txt(FileName,PathName,handles)
+function[]=haz2txt(FileName,PathName,WEIGHT,MRE,opt,h)
 
-if isempty(handles.MRE)
+if isempty(MRE)
     return
 end
-id     = handles.h.id;
-p      = handles.h.p;
-im     = handles.opt.im(:,1)';
+id     = h.id;
+p      = h.p;
+im     = opt.im(:,1)';
 
 Nsites = size(p,1);
 
 FNAME = [PathName,FileName];
 fileID = fopen(FNAME,'w');
-NIM = length(handles.opt.IM);
+NIM = length(opt.IM);
 
-str   = IM2str(handles.opt.IM);
+str   = IM2str(opt.IM);
 Le = 0;
 for i=1:length(str)
     Le = max(Le,1+length(str{i}));
@@ -22,7 +22,7 @@ end
 fprintf(fileID,' ------ Seismic Hazard Analysis ------\n');
 fprintf(fileID,' Number of Sites   : %g\n',Nsites);
 fprintf(fileID,' Hazard Points     : %g\n',length(im));
-fprintf(fileID,' Max. Distance     : %g km\n',handles.opt.MaxDistance);
+fprintf(fileID,' Max. Distance     : %g km\n',opt.MaxDistance);
 fprintf(fileID,' ---------------------------------------\n');
 fprintf(fileID,' \n');
 
@@ -33,15 +33,14 @@ for i=1:NIM
 end
 
 for site=1:Nsites
-    LAMBDA  = nansum(handles.MRE(site,:,:,:,:),4);
+    LAMBDA  = nansum(MRE(site,:,:,:,:),4);
     LAMBDA  = permute(LAMBDA,[5,2,3,1,4]);
-    weight  = handles.sys.WEIGHT(:,4);
-    lambda0 = prod(bsxfun(@power,LAMBDA,weight(:)),1);
+    lambda0 = prod(bsxfun(@power,LAMBDA,WEIGHT(:)),1);
     lambda0 = permute(lambda0,[3,2,1]);
     
     fprintf(fileID,'Site : %d \n',i);
     fprintf(fileID,'ID   : %s \n',id{site});
-    if handles.opt.ellipsoid.Code==0
+    if opt.ellipsoid.Code==0
         fprintf(fileID,'X(km): %6.4f\n',p(site,2));
         fprintf(fileID,'Y(km): %6.4f\n',p(site,1));
     else

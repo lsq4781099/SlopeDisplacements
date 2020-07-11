@@ -47,23 +47,42 @@ set(ch(handles.text),'Visible','off')
 set(ch(handles.edit),'Visible','off');
 handles.uitable1.Data=cell(0,2);
 
-if nargin==4
-    branch = 1;
-    model = varargin{1}.model(branch);
-    handles.mu    = varargin{1}.opt.ShearModulus;
-    Nsources = length(model.source);
-    Areas = nan(Nsources,1);
-    for j=1:Nsources
-        source = model.source(j);
-        Areas(j)=source.geom.Area;
-        handles.uitable1.Data(end+1,:)={source.mscl.source,func2str(source.mscl.handle)};
+if nargin==10
+    handles.mrr1 = varargin{1};
+    handles.mrr2 = varargin{2};
+    handles.mrr3 = varargin{3};
+    handles.mrr4 = varargin{4};
+    handles.mrr5 = varargin{5};
+    Nmrr  = varargin{6};
+    handles.mu  = varargin{7}.ShearModulus;
+    Nmscl = length(handles.mrr1);
+    mscl.source= cell(0,1);
+    mscl.ptr   = zeros(0,3);
+    fhand = cell(0,1);
+    for i=1:Nmscl
+        mscl.source = [mscl.source;handles.mrr1(i).source;handles.mrr2(i).source;handles.mrr3(i).source;handles.mrr4(i).source;handles.mrr5(i).source];
+        n1 = Nmrr(1,i);
+        n2 = Nmrr(2,i);
+        n3 = Nmrr(3,i);
+        n4 = Nmrr(4,i);
+        n5 = Nmrr(5,i);
+        mscl.ptr = [mscl.ptr;
+            ones(n1,1)*i,ones(n1,1)*1,(1:n1)';
+            ones(n2,1)*i,ones(n2,1)*2,(1:n2)';
+            ones(n3,1)*i,ones(n3,1)*3,(1:n3)';
+            ones(n4,1)*i,ones(n4,1)*4,(1:n4)';
+            ones(n5,1)*i,ones(n5,1)*5,(1:n5)'];
         
-        % Builds paramlist and ptrs list
-        [param,ptrs]               = mMRparam(handles,source);
-        handles.paramlist(end+1,:) = {source.label,param};
-        handles.ptrs(end+1,:)      = ptrs;
+        fhand=[fhand;
+            repmat({'delta'}     ,n1,1);
+            repmat({'truncexp'}  ,n2,1);
+            repmat({'truncnorm'} ,n3,1);
+            repmat({'yc1985'}    ,n4,1);
+            repmat({'magtable'}  ,n5,1);
+            ]; %#ok<AGROW>
     end
-    handles.Areas=Areas;
+    handles.mscl=mscl;
+    handles.uitable1.Data=[mscl.source,fhand];
     handles = CellSelectAction(handles,1);
     handles.AddNew.Enable='off';
 else
@@ -89,26 +108,11 @@ handles = mMRdefault(handles,ch(handles.text),ch(handles.edit));
 plotmrmodel(handles);
 guidata(hObject,handles)
 
-function MRselect_CreateFcn(hObject, eventdata, handles)
-
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-% ------------ create funtions --------------------------------------------
-
 function Exit_button_Callback(hObject, eventdata, handles)
-% hObject    handle to Exit_button (see GCBO)
-
-% handles    structure with handles and user data (see GUIDATA)
 close(handles.figure1)
 
 function AxisScale_Callback(hObject, eventdata, handles)
-% hObject    handle to AxisScale (see GCBO)
-
-% handles    structure with handles and user data (see GUIDATA)
 XYSCALE=[handles.ax1.XScale,handles.ax1.YScale];
-
 switch XYSCALE
     case 'linearlinear', handles.ax1.XScale='log';
     case 'loglinear',    handles.ax1.XScale='linear'; handles.ax1.YScale='log';
@@ -145,86 +149,14 @@ function File_Callback(hObject, eventdata, handles)
 function Library_Callback(hObject, eventdata, handles)
 
 function AddNew_Callback(hObject, eventdata, handles)
-
-msclid = handles.MRselect.String{handles.MRselect.Value};
-prompt={'Label'};
-name='mscl';
-numlines=1;
-defaultanswer={msclid};
-answer=inputdlg(prompt,name,numlines,defaultanswer);
-
-if isempty(answer)
-    return
-end
-
-[param,ptrs]               = mMRgetparam(handles);
-handles.paramlist(end+1,:) = {handles.fun,param};
-handles.ptrs(end+1,:)      = ptrs;
-handles.uitable1.Data(end+1,:) = {answer{1},func2str(handles.fun)};
 guidata(hObject,handles)
 
 function UpdateModel_Callback(hObject, eventdata, handles)
-if isempty(handles.selectedrow)
-    return
-end
-
-val = handles.selectedrow;
-prompt={'Update Magnitude Relation Name'};
-name='MSCL'; numlines=1;
-defaultanswer={handles.uitable1.Data{val,1}};
-answer=inputdlg(prompt,name,numlines,defaultanswer);
-if isempty(answer)
-    return
-end
-handles.uitable1.Data{val,1} = answer{1};
-[param,ptrs]                 = mMRgetparam(handles);
-handles.ptrs(val,:)          = ptrs;
-handles.paramlist(val,:)     = {handles.fun,param};
-
 guidata(hObject,handles)
 
 function LoadList_Callback(hObject, eventdata, handles)
 
-function Save_Callback(hObject, eventdata, handles)
-
-[filename, pathname] = uiputfile('*.txt','Save as');
-if isnumeric(filename)
-    return
-end
-fname = [pathname,filename];
-fid = fopen(fname,'w');
-list  = handles.uitable1.Data(:,1);
-param = handles.paramlist;
-for i=1:size(list,1)
-    fprintf(fid,'mscl %g %s\n',i,list{i});
-    fprintf(fid,'@%s\n',func2str(param{i,1}));
-    fprintf(fid,'%g\n',param{i,2});
-    par = param{i,3};
-    for j=1:length(par)
-        e = par{j};
-        if isnumeric(e)
-            fprintf(fid,'%g\n',e);
-        else
-            fprintf(fid,'%s\n',e);
-        end
-    end
-    if i<size(list,1)
-        fprintf(fid,'\n');
-    end
-end
-fclose(fid);
-if ispc,winopen(fname);end
-
 function RemoveSelection_Callback(hObject, eventdata, handles)
-
-if isempty(handles.selectedrow)
-    return
-end
-val                          = handles.selectedrow;
-handles.uitable1.Data(val,:) = [];
-handles.ptrs(val,:)          = [];
-handles.paramlist(val,:)     = [];
-handles.selectedrow          = [];
 guidata(hObject,handles)
 
 % ------------  edit boxes
@@ -232,78 +164,35 @@ function e1_Callback(hObject, eventdata, handles)
 plotmrmodel(handles);
 guidata(hObject,handles)
 
-function e1_CreateFcn(hObject, eventdata, handles)
-
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
 function e2_Callback(hObject, eventdata, handles)
 
 plotmrmodel(handles);
 guidata(hObject,handles)
 
-function e2_CreateFcn(hObject, eventdata, handles)
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
 function e3_Callback(hObject, eventdata, handles)
 plotmrmodel(handles);
 guidata(hObject,handles)
-
-function e3_CreateFcn(hObject, eventdata, handles)
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
 
 function e4_Callback(hObject, eventdata, handles)
 plotmrmodel(handles);
 guidata(hObject,handles)
 
-function e4_CreateFcn(hObject, eventdata, handles)
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
 function e5_Callback(hObject, eventdata, handles)
 plotmrmodel(handles);
 guidata(hObject,handles)
-
-function e5_CreateFcn(hObject, eventdata, handles)
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
 
 function e6_Callback(hObject, eventdata, handles)
 
 plotmrmodel(handles);
 guidata(hObject,handles)
 
-function e6_CreateFcn(hObject, eventdata, handles)
-
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
 function e7_Callback(hObject, eventdata, handles)
 plotmrmodel(handles);
 guidata(hObject,handles)
 
-function e7_CreateFcn(hObject, eventdata, handles)
-
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
 function e8_Callback(hObject, eventdata, handles)
 plotmrmodel(handles);
 guidata(hObject,handles)
-
-function e8_CreateFcn(hObject, eventdata, handles)
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
 
 function e9_Callback(hObject, eventdata, handles)
 
@@ -316,11 +205,6 @@ end
 plotmrmodel(handles);
 guidata(hObject,handles)
 
-function e9_CreateFcn(hObject, eventdata, handles)
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
 function e10_Callback(hObject, eventdata, handles)
 switch handles.MRselect.String{handles.MRselect.Value}
     case 'Chiou Youngs 2008 - NGA' % set default Z1.0
@@ -332,47 +216,21 @@ end
 plotmrmodel(handles);
 guidata(hObject,handles)
 
-function e10_CreateFcn(hObject, eventdata, handles)
-
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
 function e11_Callback(hObject, eventdata, handles)
 plotmrmodel(handles);
 guidata(hObject,handles)
-
-function e11_CreateFcn(hObject, eventdata, handles)
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
 
 function e12_Callback(hObject, eventdata, handles)
 plotmrmodel(handles);
 guidata(hObject,handles)
 
-function e12_CreateFcn(hObject, eventdata, handles)
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
 function e13_Callback(hObject, eventdata, handles)
 plotmrmodel(handles);
 guidata(hObject,handles)
 
-function e13_CreateFcn(hObject, eventdata, handles)
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
 function e14_Callback(hObject, eventdata, handles)
 plotmrmodel(handles);
 guidata(hObject,handles)
-
-function e14_CreateFcn(hObject, eventdata, handles)
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
 
 function gridmanager_Callback(hObject, eventdata, handles)
 switch [handles.ax1.XGrid,handles.ax1.XMinorGrid]
@@ -408,23 +266,117 @@ handles = CellSelectAction(handles,ind);
 guidata(hObject,handles)
 
 function[handles]=CellSelectAction(handles,ind)
-vals = handles.ptrs(ind,:);
-handles.MRselect.Value = vals(end);
+
+ms     = handles.mscl.ptr(ind,1);
+mstype = handles.mscl.ptr(ind,2);
+mspos  = handles.mscl.ptr(ind,3);
+
+handles.MRselect.Value = mstype;
 ch=get(handles.panel2,'children');
 set(ch(handles.text),'Visible','off')
 set(ch(handles.edit),'Visible','off','Style','edit');
 handles = mMRdefault(handles,ch(handles.text),ch(handles.edit));
 
-paramlist= handles.paramlist{ind,2};
-flds     = fields(paramlist);
-for i=1:length(flds)
-    fn = ['e',num2str(i)];
-    handles.(fn).String=num2str(paramlist.(flds{i}));
-    handles.(fn).Value=vals(i);
+switch mstype
+    case 1
+        num=handles.mrr1(ms).num(mspos,:);
+        [~,~,meanMo]=delta(5:8,num(3));
+        if num(1)==2
+            A = 100*(100000^2); %100 km2
+            S = num(2);
+            NMmin = handles.mu*A*S/meanMo;
+        else
+            NMmin = num(2);
+        end
+        
+        handles.e1.String=sprintf('%g',NMmin);
+        handles.e2.String=sprintf('%g',num(3));
+        if num(1)==2
+            handles.e3.String=sprintf('%g',S);
+            handles.e4.String=sprintf('%g',meanMo);
+        else
+            handles.e3.String='-';
+            handles.e4.String='-';
+        end
+    case 2
+        num=handles.mrr2(ms).num(mspos,:);
+        [~,~,meanMo]=truncexp(5:8,num(3:5));
+        if num(1)==2
+            A = 100*(100000^2); %100 km2
+            S = num(2);
+            NMmin = handles.mu*A*S/meanMo;
+        else
+            NMmin = num(2);
+        end
+        
+        handles.e1.String=sprintf('%g',NMmin);
+        handles.e2.String=sprintf('%g',num(3));
+        handles.e3.String=sprintf('%g',num(4));
+        handles.e4.String=sprintf('%g',num(5));
+        if num(1)==2
+            handles.e5.String=sprintf('%g',S);
+            handles.e6.String=sprintf('%g',meanMo);
+        else
+            handles.e5.String='-';
+            handles.e6.String='-';
+        end
+        
+    case 3
+        num=handles.mrr3(ms).num(mspos,:);
+        [~,~,meanMo]=truncnorm(5:8,num(3:6));
+        if num(1)==2
+            A = 100*(100000^2); %100 km2
+            S = num(2);
+            NMmin = handles.mu*A*S/meanMo;
+        else
+            NMmin = num(2);
+        end
+        handles.e1.String=sprintf('%g',NMmin);
+        handles.e2.String=sprintf('%g',num(3));
+        handles.e3.String=sprintf('%g',num(4));
+        handles.e4.String=sprintf('%g',num(5));
+        handles.e5.String=sprintf('%g',num(6));
+        if num(1)==2
+            handles.e6.String=sprintf('%g',S);
+            handles.e7.String=sprintf('%g',meanMo);
+        else
+            handles.e6.String='-';
+            handles.e7.String='-';
+        end
+        
+        
+    case 4
+        num=handles.mrr4(ms).num(mspos,:);
+        [~,~,meanMo]=yc1985(5:8,num(3:5));
+        if num(1)==2
+            A = 100*(100000^2); %100 km2
+            S = num(2);
+            NMmin = handles.mu*A*S/meanMo;
+        else
+            NMmin = num(2);
+        end
+        handles.e1.String=sprintf('%g',NMmin);
+        handles.e2.String=sprintf('%g',num(3));
+        handles.e3.String=sprintf('%g',num(4));
+        handles.e4.String=sprintf('%g',num(5));
+        if num(1)==2
+            handles.e5.String=sprintf('%g',S);
+            handles.e6.String=sprintf('%g',meanMo);
+        else
+            handles.e5.String='-';
+            handles.e6.String='-';
+        end
+    case 5
+        num=handles.mrr5(ms).num{mspos};
+        NMmin = num(2);
+        Mmin  = num(3);
+        dM    = num(4);
+        occr  = num(5:end);
+        handles.e1.String=sprintf('%g',Mmin);
+        handles.e2.String=sprintf('%g',dM);
+        handles.e3.String=sprintf(repmat('%g ',1,length(occr)),occr');
 end
-if isfield(handles,'Areas')
-    handles.CurrentArea = handles.Areas(ind);
-end
+
 plotmrmodel(handles);
 handles.selectedrow=ind;
 
@@ -436,9 +388,5 @@ guidata(hObject,handles)
 function UndockAxis_Callback(hObject, eventdata, handles)
 figure2clipboard_uimenu(hObject, eventdata,handles.ax1)
 
-
-
-% --- Executes when selected object is changed in uibuttongroup1.
 function uibuttongroup1_SelectionChangedFcn(hObject, eventdata, handles)
-
 plotmrmodel(handles);

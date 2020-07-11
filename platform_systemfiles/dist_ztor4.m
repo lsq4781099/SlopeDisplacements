@@ -36,8 +36,8 @@ corner31XYZ = bsxfun(@plus,corner31*rot',pmean);
 corner32XYZ = bsxfun(@plus,corner32*rot',pmean);
 
 % corners of Rupture Area in WGS84 coordinates
-corner31GPS = abs(xyz2gps(corner31XYZ,ellipsoid));
-corner32GPS = abs(xyz2gps(corner32XYZ,ellipsoid));
+corner31GPS = abs(xyz2gpsO(corner31XYZ,ellipsoid));
+corner32GPS = abs(xyz2gpsO(corner32XYZ,ellipsoid));
 
 ztor  =min(corner31GPS(:,3),corner32GPS(:,3));
 
@@ -55,6 +55,6 @@ ztor  =min(corner31GPS(:,3),corner32GPS(:,3));
 % corner3XYZ = bsxfun(@plus,corner3*rot',pmean);
 % 
 % % corners of Rupture Area in WGS84 coordinates
-% corner3GPS = xyz2gps(corner3XYZ,ellipsoid);
+% corner3GPS = xyz2gpsO(corner3XYZ,ellipsoid);
 % 
 % ztor  =-corner3GPS(:,3);

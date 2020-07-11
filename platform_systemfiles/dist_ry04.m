@@ -1,4 +1,4 @@
-function[ry0]=dist_ry04(r0,rf,RW,RL,geom,~)
+function[ry0]=dist_ry04(r0,rf,RW,RL,geom)
 %------------------------------------------------------------------------
 % ry0 = The horizontal distance off the end of the rupture measured 
 %       parallel to strike (km)

@@ -44,16 +44,16 @@ corner3XYZ = bsxfun(@plus,corner3*rot',pmean);
 corner4XYZ = bsxfun(@plus,corner4*rot',pmean);
 
 % corners of Rupture Area in WGS84 coordinates
-cornerGPS(:,:,1) = xyz2gps(corner1XYZ,ellipsoid);
-cornerGPS(:,:,2) = xyz2gps(corner2XYZ,ellipsoid);
-cornerGPS(:,:,3) = xyz2gps(corner3XYZ,ellipsoid);
-cornerGPS(:,:,4) = xyz2gps(corner4XYZ,ellipsoid);
+cornerGPS(:,:,1) = xyz2gpsO(corner1XYZ,ellipsoid);
+cornerGPS(:,:,2) = xyz2gpsO(corner2XYZ,ellipsoid);
+cornerGPS(:,:,3) = xyz2gpsO(corner3XYZ,ellipsoid);
+cornerGPS(:,:,4) = xyz2gpsO(corner4XYZ,ellipsoid);
 
 for i=1:length(x1)
    zcord =permute(cornerGPS(i,1:3,:),[3 2 1]);
    cornerGPSi = sortrows(zcord,-3);
    cornersurf = cornerGPSi*diag([1,1,0]);
-   x  = gps2xyz(cornersurf,ellipsoid);
+   x  = gps2xyzO(cornersurf,ellipsoid);
    dx = x(2,:)-x(1,:);
    num = fastcross(dx,bsxfun(@minus,x(1,:),r0));
    d1  = sum(num.^2,2).^0.5./sum(dx.^2,2).^0.5;

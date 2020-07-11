@@ -21,8 +21,8 @@ delete(findall(handles.ax1,'tag','pat2'))
 
 set(handles.ax1,'xscale','log','yscale','log','zscale','linear','xlim',x1([1 end]),'ylim',x2([1 end]))
 view(handles.ax1,[0 90])
-xlabel(handles.ax1,IM2str(handles.IM(1)),'fontsize',10)
-ylabel(handles.ax1,IM2str(handles.IM(2)),'fontsize',10)
+xlabel(handles.ax1,addIMunits(handles.IM(1)),'fontsize',10)
+ylabel(handles.ax1,addIMunits(handles.IM(2)),'fontsize',10)
 zlabel(handles.ax1,str,'fontsize',10)
 
 modo = ismember({handles.ptype1.Checked,handles.ptype2.Checked,handles.ptype3.Checked},'on');
@@ -45,8 +45,10 @@ switch find(modo)
 end
 
 caxis([min(y(:)) max(y(:))])
-colorbar('peer',handles.ax1,'location','eastoutside','tag','cbar');
+T=colorbar('peer',handles.ax1,'location','eastoutside','tag','cbar');
+T.Title.String=str;
 handles.ax1.Layer='top';
+
 
 function F=tplot(ax,im1,im2,rho,ptype)
 

@@ -18,11 +18,17 @@ end
 
 function HazardOptions_OpeningFcn(hObject, eventdata, handles, varargin) %#ok<*INUSL>
 
-if nargin==6 && strcmp(varargin{3},'off')
+if nargin==6
     % loads input variables
     branchnames = varargin{1}(1,:);
     isREGULAR   = cell2mat(varargin{1}(2,:));
     ihaz        = varargin{2};
+    
+    if  strcmp(varargin{3},'on')
+        handles.allowdeag=true;
+    else
+        handles.allowdeag=false;
+    end
     
     % sets mode
     switch ihaz.mod
@@ -115,43 +121,17 @@ if nargin==6 && strcmp(varargin{3},'off')
     
 end
 
-if nargin==6 && strcmp(varargin{3},'on')
-    % loads input variables
-    handles.mod1.Enable='inactive';
+if handles.allowdeag==false
+    handles.mod1.Value=1;
+    handles.mod2.Value=0;
     handles.mod2.Enable='off';
-    handles.mod3.Enable='off';
     
-
-    % populate pannel 1
-    handles.pan1_1.Enable='on';
-    handles.pan1_1.Value=1;
-    handles.pan1_2.Enable='off';
-    handles.pan1_3.Enable='off';
-    handles.pan1_4.Enable='off';
-    handles.pan1_5.Enable='off';
-    
-    % populate pannel 2
-    handles.pan2_1.Enable='off';
+    handles.pan2_2.Value=0;
+    handles.pan2_3.Value=0;
     handles.pan2_2.Enable='off';
     handles.pan2_3.Enable='off';
-    handles.pan2_4.Enable='off';
-    
-    % fills dbt
-    handles.pan3_1.Enable='off';
-    handles.pan3_2.Enable='off';
-    handles.pan3_3.Enable='off';
-    handles.pan3_4.Enable='off';
-
-    % fills hazard map options
-%     handles.pan4_1.Enable ='off';
-%     handles.pan4_2.Enable ='off';
-
-    % fills pce data
-    handles.pan5_1.Enable='off';
-    handles.pan5_2.Enable='off';
-    handles.pan5_3.Enable='off';
-%     handles.isregular     = isREGULAR;
 end
+
 
 guidata(hObject, handles);
 uiwait(handles.figure1);
@@ -197,7 +177,7 @@ haz.pce = [handles.pan5_1.Value,...
 Nbranches = length(handles.pan2_1.String);
 rnd = rand(Nbranches,1); rnd = rnd/sum(rnd);
 haz.rnd = rnd;
-       
+
 varargout{1} = haz;
 delete(handles.figure1)
 
@@ -358,8 +338,10 @@ function pan2_4_Callback(hObject, eventdata, handles)
 function pan2_1_Callback(hObject, eventdata, handles)
 val = hObject.Value;
 if handles.isregular(val)==1 % isREGULAR
-    handles.pan2_2.Enable='on';
-    handles.pan2_3.Enable='on';
+    if handles.allowdeag==1
+        handles.pan2_2.Enable='on';
+        handles.pan2_3.Enable='on';
+    end
     handles.pan2_4.Enable='off';
 else %isPCE
     handles.pan2_2.Enable='off';

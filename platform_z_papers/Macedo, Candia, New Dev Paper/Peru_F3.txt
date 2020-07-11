@@ -1,0 +1,63 @@
+Option 0 - Global Parameters
+Projection   : WGS84
+Image        : Lima.mat
+Boundary     : PER_adm1.shp 
+ShearModulus : 3e11      #dyne/cm2
+IM           : 0.5
+im           : logsp(0.001,3,20)
+MaxDistance  : 300
+MagDiscrete  : gauss 10
+Sigma        : 
+PCE          : shuffle MC 500
+IM1          : 0.01
+IM2          : 1
+Spatial      : @none_spatial
+Spectral     : @corr_none
+SourceDeagg  : on
+Clusters     : off 100 1
+
+Option 1 - Logic Tree Weights
+Geom Weight : 1
+Gmpe Weight : 1
+Mscl Weight : 1 
+
+Option 2 - Source Geometry
+geometry 1
+area1 F3  interface  normal  wc1994 0 1 20 0 -80.991 -8.528 -25 -80.022 -10.322 -25 -77.184 -14.412 -25 -75.856 -13.563 -60 -77.824 -10.464 -60 -79.267 -7.74 -60                                              
+                                                                                                                                                                                                        
+Option 3 - GMPE Library
+gmm at1  medianPCE_bchydro
+gmm at2  PCE_bchydro
+
+Option 4 - GMPE GROUPS
+gmmgroup medianPCE    1
+gmmgroup PCE_bchydro  2
+
+Option 5 - MAGNITUDE SCALING RELATIONS
+seismicity 1
+truncexp F3  NM 3.98 0.7522 4.8 8.4
+
+Option 6 - Pre defined sites
+Lima -77.50 -11.18 0 VS30 760 ky 0.14 covky 0.0025 Ts 0.33 covTs 0.0015
+
+Option PSDA 1 - PSDA setup                                                                                             
+d         : logsp(1,100,10)  # cm
+realSa    : 30
+realD     : 40
+imhazard  : full
+rng       : shuffle
+method    : PC
+optimize  : on
+kysamples : 5
+Tssamples : 5
+
+Option PSDA 2 Library of Slope Displacement Models                                                                    
+BT2007    handle psda_BT2007
+BT2007PC  handle psda_BT2007_cdm
+                                                                                                                  
+Option PSDA 3 Slope Displacement Models                                                                               
+Slope Weights 1
+SL1 interface BT2007 intraslab BT2007 crustal BT2007
+
+Option PSDA 4 Slope Displacement Models with PC
+SLPCE1 hazard 1 2 1 interface BT2007PC intraslab BT2007PC crustal BT2007PC

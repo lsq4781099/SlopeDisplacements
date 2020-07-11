@@ -22,26 +22,25 @@ function CGMM_OpeningFcn(hObject, eventdata, handles, varargin) %#ok<*INUSL>
 handles.Exit_button.CData  = double(imread('exit.jpg'))/255;
 handles.ax2Limits.CData    = double(imread('Limits.jpg'))/255;
 handles.sys        = varargin{1};
-handles.model      = varargin{2};
-handles.opt        = varargin{3};
-handles.h          = varargin{4};
-handles.HazOptions = varargin{5};
-isPCE              = varargin{6};
+handles.opt        = varargin{2};
+handles.h          = varargin{3};
+handles.HazOptions = varargin{4};
 
 % ------------ REMOVES REGULAR MODELS -------------------------------------
-handles.isREGULAR = find(horzcat(handles.model.isregular)==1);
-handles.isPCE     = find(horzcat(handles.model.isregular)==0);
-handles.model = handles.model(isPCE); 
-[~,B]=setdiff(handles.sys.BRANCH(:,2),isPCE);
+isPCE = handles.sys.isPCE;
+[~,B]=setdiff(handles.sys.branch(:,2),isPCE);
 if ~isempty(B)
-    handles.sys.BRANCH(B,:)=[];
-    handles.sys.WEIGHT(B,:)=[];
-    handles.sys.WEIGHT(:,4)=handles.sys.WEIGHT(:,4)/sum(handles.sys.WEIGHT(:,4));
+    handles.sys.branch(B,:)=[];
+    handles.sys.weight(B,:)=[];
+    handles.sys.weight(:,5)=handles.sys.weight(:,5)/sum(handles.sys.weight(:,5));
+    warndlg('REGULAR Models removed from logic tree. Logic Tree weights were normalized')
+    uiwait
 end
-% -------------------------------------------------------------------------
 
-handles.menu_branch.String = {handles.model.id};
-handles.menu_source.String = {handles.model(1).source.label};
+% -------------------------------------------------------------------------
+Nmodels = size(handles.sys.branch,1);
+handles.menu_branch.String = compose('Branch %i',1:Nmodels);
+handles.menu_source.String = handles.sys.labelG{1};
 handles.site_menu.String   = handles.h.id;
 handles.IM_select.String   = IM2str(handles.opt.IM);
 
@@ -72,19 +71,26 @@ delete(findall(handles.ax2,'tag','perMCS'));
 drawnow
 
 ellip      = handles.opt.ellipsoid;
-branch_ptr = handles.menu_branch.Value;
+model_ptr  = handles.menu_branch.Value;
 source_ptr = handles.menu_source.Value;
 site_ptr   = handles.site_menu.Value;
+
+h.id    = handles.h.id(site_ptr,:);
+h.p     = handles.h.p(site_ptr,:);
+h.param = handles.h.param;
+h.value = handles.h.value(site_ptr,:);
+
 im_ptr     = handles.IM_select.Value;
 RandType   = handles.rand_pop.String{handles.rand_pop.Value};
 im         = handles.opt.im(:,im_ptr);
 IM         = handles.opt.IM(im_ptr);
-site       = handles.h.p(site_ptr,:);
-r0         = gps2xyz(site,ellip);
-source     = handles.model(branch_ptr).source(source_ptr);
-source     = mGMPEVs30(source,handles.h.Vs30(site_ptr));
+r0         = gps2xyz(h.p,ellip);
+branch     = handles.sys.branch;
+source     = buildmodelin(handles.sys,branch(model_ptr,:),handles.opt);
+source     = source(source_ptr);
+source.media = h.value;
 Nreal      = str2double(handles.Nsim.String);
-gmpetype   = source.gmpe.type;
+gmpetype   = source.gmm.type;
 if ~strcmp(gmpetype,'pce')
     m=warndlg(sprintf('GMM %s not valid for Polynomial Chaos Expansion',func2str(source.gmpe.handle)));
     uiwait(m);
@@ -94,14 +100,14 @@ end
 % -------  running section -----------------------------------------------
 rng(RandType);
 t=cputime;
-handles.PCE = runPCE(source,r0,IM,im,Nreal,ellip); 
+handles.PCE = runPCE(source,r0,IM,im,Nreal,ellip,h.param); 
 time1       = cputime-t;
 handles.PCE = permute(handles.PCE,[1 3 2]); 
 
 
 rng(RandType);
 t = cputime;
-handles.MCS = runMCS(source,r0,IM,im,Nreal,ellip); 
+handles.MCS = runMCS(source,r0,IM,im,Nreal,ellip,h.param); 
 time2       = cputime-t;
 handles.MCS = permute(handles.MCS,[1 3 2]); 
 

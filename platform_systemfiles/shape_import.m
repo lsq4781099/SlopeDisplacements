@@ -44,7 +44,7 @@ handles.id   = [];
 handles.X    = [];
 handles.Y    = [];
 handles.Z    = [];
-handles.Vs30 = [];
+handles.VS30 = [];
 
 % clustered data from
 handles.idc   = [];
@@ -61,16 +61,16 @@ uiwait(handles.figure1);
 
 function varargout = shape_import_OutputFcn(hObject, eventdata, handles)
 varargout{1}=[]; %ID
-varargout{2}=[]; %Lat,Lon,Elev,Vs30
+varargout{2}=[]; %Lat,Lon,Elev,VS30
 varargout{3}=[]; %index
 
 if handles.exittype==1
-    varargout{1}=[handles.id,num2cell([handles.Y,handles.X,handles.Z,handles.Vs30])];
+    varargout{1}=[handles.id,num2cell([handles.X,handles.Y,handles.Z,handles.VS30])];
     varargout{2}=[];
 end
 
 if handles.exittype==2
-    varargout{1}=[handles.idc,num2cell([handles.Yc,handles.Xc,handles.Zc,handles.Vs30c])];
+    varargout{1}=[handles.idc,num2cell([handles.Xc,handles.Yc,handles.Zc,handles.Vs30c])];
     varargout{2}=handles.index;
 end
 
@@ -122,13 +122,13 @@ else
     handles.Z = zeros(length(handles.X),1);
 end
 
-% Vs30
+% VS30
 if handles.pop3.Value>1
     str = handles.pop3.String{handles.pop3.Value};
-    handles.Vs30 = horzcat(data.(str))';
-    handles.Vs30 = idwm(handles.Vs30,handles.X,handles.Y);
+    handles.VS30 = horzcat(data.(str))';
+    handles.VS30 = idwm(handles.VS30,handles.X,handles.Y);
 else
-    handles.Vs30 = zeros(length(handles.X),1);
+    handles.VS30 = zeros(length(handles.X),1);
 end
 
 % plot section
@@ -139,13 +139,13 @@ if strcmpi(handles.ShapeType.String,'PolyLine')
         xj = handles.X(ISNAN(j)+1:ISNAN(j+1)-1);
         yj = handles.Y(ISNAN(j)+1:ISNAN(j+1)-1);
         zj = handles.Z(ISNAN(j)+1:ISNAN(j+1)-1);
-        vj = handles.Vs30(ISNAN(j)+1:ISNAN(j+1)-1);
+        vj = handles.VS30(ISNAN(j)+1:ISNAN(j+1)-1);
         data(j,:)=mean([xj,yj,zj,vj],1);
     end
     handles.X    = data(:,1);
     handles.Y    = data(:,2);
     handles.Z    = data(:,3);
-    handles.Vs30 = data(:,4);
+    handles.VS30 = data(:,4);
     
 end
 delete(findall(handles.ax1,'type','patch'));
@@ -169,7 +169,7 @@ options = statset('UseParallel',1);
 
 Nclusters = str2double(handles.NumClusters.String);
 if handles.pop3.Value>1
-    [handles.index,data]=kmeans([handles.X,handles.Y,handles.Vs30],Nclusters,'Options',options,'MaxIter',10000,'Display','off','Replicates',1);
+    [handles.index,data]=kmeans([handles.X,handles.Y,handles.VS30],Nclusters,'Options',options,'MaxIter',10000,'Display','off','Replicates',1);
 else
     [handles.index,data]=kmeans([handles.X,handles.Y],Nclusters,'Options',options,'MaxIter',10000,'Display','off','Replicates',1);
 end
@@ -221,18 +221,18 @@ handles.exittype = 3;
 guidata(hObject,handles)
 close(handles.figure1)
 
-function Vs30 = idwm(Vs30,X,Y)
+function VS30 = idwm(VS30,X,Y)
 
-ind = find((Vs30<0));
+ind = find((VS30<0));
 for i=1:length(ind)
     ii=ind(i);
     [d,pos] = sort((X(ii)-X).^2+(Y(ii)-Y).^2);
     d(1)=[];
     pos(1)=[];
-    vs=Vs30(pos);
+    vs=VS30(pos);
     d(vs<0)=[];
     vs(vs<0)=[];
     w  = 1./d(1:10);
     vs = vs(1:10);
-    Vs30(ii) = w'*vs/sum(w);
+    VS30(ii) = w'*vs/sum(w);
 end

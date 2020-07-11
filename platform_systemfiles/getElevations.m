@@ -1,4 +1,4 @@
-function [elevation, resolution] = getElevations(latitude, longitude, varargin)
+function [elevation, resolution] = getElevations(longitude, latitude,varargin)
 %GETELEVATIONS queries Google Maps API webservice for ground elevations.
 %
 %   elevation = GETELEVATIONS(latitude, longitude) returns ground

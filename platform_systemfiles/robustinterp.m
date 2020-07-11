@@ -1,6 +1,6 @@
 function [y]=robustinterp(X,Y,x,style)
 
-ind = isnan(X+Y);
+ind = or(isnan(X+Y),isinf(X+Y));
 X(ind)=[];
 Y(ind)=[];
 
@@ -12,7 +12,11 @@ switch style
         zer=find(or(Xu==0,Yu==0));
         Xu(zer)=[];
         Yu(zer)=[];
-        y = exp(interp1(log(Xu),log(Yu),log(x)));
+        y = exp(interp1(log(Xu),log(Yu),log(x),'pchip'));
     case 'linear'
-        y = interp1(Xu,Yu,x);
+        if numel(Xu)==1
+            y = NaN;
+        else
+            y = interp1(Xu,Yu,x);
+        end
 end

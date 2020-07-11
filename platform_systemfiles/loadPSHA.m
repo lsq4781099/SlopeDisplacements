@@ -8,6 +8,7 @@ fid  = fopen(filename);
 if fid==-1
     return
 end
+sys.filename=filename;
 data = textscan(fid,'%s','delimiter','\n');
 data = data{1};
 fclose(fid);
@@ -34,25 +35,35 @@ data(emptylist,:)=[];
 % removes multiple spaces
 data=regexprep(data,' +',' ');
 
-% computes option pointers
-ptrs = nan(16,2);
+% add source and magnitude scaling relations from textfiles
+data=loadTXTdata(data,'txt2source'); % add source from textfile
+data=loadTXTdata(data,'txt2mscl');   % add magnitude recurrence mododels from textfile
+
+%% computes option pointers
+ptrs  = nan(18,2); % Seismic Hazard Options                   (SeismicHazard)
 for i=1:size(data,1)
-    if strfind(data{i,1},'Option 0 '), ptrs(1,1) =i;end
-    if strfind(data{i,1},'Option 1 '), ptrs(2,1) =i;end
-    if strfind(data{i,1},'Option 2 '), ptrs(3,1) =i;end
-    if strfind(data{i,1},'Option 3 '), ptrs(4,1) =i;end
-    if strfind(data{i,1},'Option 4 '), ptrs(5,1) =i;end
-    if strfind(data{i,1},'Option 5 '), ptrs(6,1) =i;end
-    if strfind(data{i,1},'Option 6 '), ptrs(7,1) =i;end
-    if strfind(data{i,1},'Option 7 '), ptrs(8,1) =i;end % sites (optional)
-    if strfind(data{i,1},'Option 8 '), ptrs(9,1) =i;end % validation (optional)
-    if strfind(data{i,1},'Option 9 '), ptrs(10,1)=i;end % psda (optional)
-    if strfind(data{i,1},'Option 10 '),ptrs(11,1)=i;end % psda (optional)
-    if strfind(data{i,1},'Option 11 '),ptrs(12,1)=i;end % psda (optional)
-    if strfind(data{i,1},'Option 12 '),ptrs(13,1)=i;end % psda (optional)
-    if strfind(data{i,1},'Option 13 '),ptrs(14,1)=i;end % psda (optional)
-    if strfind(data{i,1},'Option 14 '),ptrs(15,1)=i;end % validation (optional)
-    if strfind(data{i,1},'Option 15 '),ptrs(16,1)=i;end % SPC (optional)
+    if strfind(data{i,1},'Option 0 '), ptrs(1,1) =i;end % real values
+    if strfind(data{i,1},'Option 1 '), ptrs(2,1) =i;end % Logic tree weights
+    if strfind(data{i,1},'Option 2 '), ptrs(3,1) =i;end % Source Geometry
+    if strfind(data{i,1},'Option 3 '), ptrs(4,1) =i;end % GMM Library
+    if strfind(data{i,1},'Option 4 '), ptrs(5,1) =i;end % GMM Groups
+    if strfind(data{i,1},'Option 5 '), ptrs(6,1) =i;end % Magnitude Recurrence
+    if strfind(data{i,1},'Option 6 '), ptrs(7,1) =i;end % Sites
+    if strfind(data{i,1},'Option 7 '), ptrs(8,1) =i;end % Spatial Distributed Data
+    if strfind(data{i,1},'Option 8 '), ptrs(9,1) =i;end % Validation (optional)
+    
+    % PSDA Options
+    if strfind(data{i,1},'Option PSDA 1 '),ptrs(10,1)=i;end % PSDA setup
+    if strfind(data{i,1},'Option PSDA 2 '),ptrs(11,1)=i;end % Library of Slope Displacement Models 
+    if strfind(data{i,1},'Option PSDA 3 '),ptrs(12,1)=i;end % REG Slope Displacement Models
+    if strfind(data{i,1},'Option PSDA 4 '),ptrs(13,1)=i;end % PCE Slope Displacement Models
+    if strfind(data{i,1},'Option PSDA 5 '),ptrs(14,1)=i;end % PSDA validation
+    
+    % Liquefaction Induced Settlement (LIS) Options
+    if strfind(data{i,1},'Option LIBS 1 '),ptrs(15,1) =i;end % LIBS options
+    if strfind(data{i,1},'Option LIBS 2 '),ptrs(16,1) =i;end % Building and Site Specific Parameters
+    if strfind(data{i,1},'Option LIBS 3 '),ptrs(17,1) =i;end % Settlement model library
+    if strfind(data{i,1},'Option LIBS 4 '),ptrs(18,1) =i;end % Settlement branches
 end
 ptrs = FindEndPtrs(ptrs,data);
 
@@ -75,67 +86,72 @@ end
 
 opt.Image        = str{2}{2};
 opt.Boundary     = str{3}{2};
-opt.Layer        = str{4}{2};
-opt.ShearModulus = str2double(str{5}{2});
-opt.IM           = str2IM(field2str(regexp(str{6}{2},'\s+','split')));
-opt.im           = eval(['[',str{7}{2},']'])'; % is stored in columns
+opt.ShearModulus = str2double(str{4}{2});
+opt.IM           = str2IM(field2str(regexp(str{5}{2},'\s+','split')));
+opt.im           = eval(['[',str{6}{2},']'])'; % is stored in columns
 
 if size(opt.im,2) ~= length(opt.IM)
     opt.im = repmat(opt.im(:,1),1,length(opt.IM));
 end
 
-opt.MaxDistance  = str2double(str{8}{2});
-Mag = regexp(str{9}{2},'\ ','split');
+opt.MaxDistance  = str2double(str{7}{2});
+Mag = regexp(str{8}{2},'\ ','split');
 Mag{2}=str2double(Mag{2});
 opt.MagDiscrete  = Mag;
 
-cgmm = regexp(str{10}{2},'\ ','split');
-opt.CGMM         = {cgmm{1},cgmm{2},str2double(cgmm{3})};
-opt.IM1          = str2IM(field2str(regexp(str{11}{2},'\s+','split'),'single'));
+sig = regexp(str{9}{2},'\ ','split');
+if isempty(sig{1})
+    opt.Sigma={};
+else
+    opt.Sigma        = {sig{1},str2double(sig{2})};
+end
+
+cgmm             = regexp(str{10}{2},'\ ','split');
+opt.PCE          = {cgmm{1},cgmm{2},str2double(cgmm{3})};
+opt.IM1          = str2IM(field2str(regexp(str{11}{2},'\s+','split')));
 opt.IM2          = str2IM(field2str(regexp(str{12}{2},'\s+','split')));
 opt.Spatial      = str2func(strrep(str{13}{2},'@',''));
 opt.Spectral     = str2func(strrep(str{14}{2},'@',''));
-opt.LiteMode     = str{15}{2};
+opt.SourceDeagg  = str{15}{2};
 aux              = regexp(str{16}{2},'\ ','split');  
 opt.Clusters     = {aux{1},str2double(aux(2:3))};
+
+opt.IM  = opt.IM(:);
+opt.IM1 = opt.IM1(:);
+opt.IM2 = opt.IM2(:); opt.IM2(isnan(opt.IM2))=[];
 
 %% ASSEMBLES LOGIC TREE
 str = data(ptrs(2,1):ptrs(2,2),:);
 str = regexp(str,'\:','split');
-
 geom_weight = eval(['[',str{1}{2},']'])'; Ngeom = length(geom_weight);
 gmpe_weight = eval(['[',str{2}{2},']'])'; Ngmpe = length(gmpe_weight);
 mscl_weight = eval(['[',str{3}{2},']'])'; Nmscl = length(mscl_weight);
 
-Ntot   = Ngeom*Ngmpe*Nmscl;
-branch = zeros(Ntot,3);
-k=0;
-for d1=1:Ngeom
-    for d2=1:Ngmpe
-        for d3=1:Nmscl
-            k=k+1;
-            branch(k,:)=[d1,d2,d3];
-        end
-    end
-end
-
+[iZ,iY,iX] = meshgrid(1:Nmscl,1:Ngmpe,1:Ngeom);
+branch = [iX(:),iY(:),iZ(:)];
+N0     = size(branch,1);
 weight = [
     geom_weight(branch(:,1)),...
     gmpe_weight(branch(:,2)),...
     mscl_weight(branch(:,3))];
+weight = [weight,ones(N0,1)];
+branch = [branch,ones(N0,1)];
 weight = [weight,prod(weight,2)];
 
-%% READS SURCE GEOMETRY
-tt=cputime;
-fprintf('%-20s','Reading GEOM:')
+%% READS SOURCES
+source1(1:Ngeom,1) = createObj('source');
+source2(1:Ngeom,1) = createObj('source');
+source3(1:Ngeom,1) = createObj('source');
+source4(1:Ngeom,1) = createObj('source');
+source5(1:Ngeom,1) = createObj('source');
+source6(1:Ngeom,1) = createObj('source');
+source7(1:Ngeom,1) = createObj('source');
+
 str = data(ptrs(3,1):ptrs(3,2),:);
 pt  = zeros(Ngeom,2); j=1;
 pt(end)=size(str,1);
-GEOM(1:Ngeom) = struct('id',[],'source',[]);
 for i=1:size(str,1)
     if ~isempty(strfind(str{i},'geometry'))
-        s=regexp(str{i},'\ ','split');
-        GEOM(j).id     = horzcat2(s{3:end});
         pt(j,1)=i+1;
         if j>1
             pt(j-1,2)=i-1;
@@ -143,141 +159,145 @@ for i=1:size(str,1)
         j=j+1;
     end
 end
+
 for i=1:Ngeom
-    GEOM(i).source=readGeometry(str(pt(i,1):pt(i,2)));
+    stri = str(pt(i,1):pt(i,2));
+    ind1  = contains(stri,'point1'); source1(i) = read_obj1(stri(ind1));
+    ind2  = contains(stri,'line1');  source2(i) = read_obj2(stri(ind2));
+    ind3  = contains(stri,'area1');  source3(i) = read_obj3(stri(ind3));
+    ind4  = contains(stri,'area2');  source4(i) = read_obj4(stri(ind4),opt.ellipsoid);
+    ind5  = contains(stri,'area3');  source5(i) = read_obj5(stri(ind5));
+    ind6  = contains(stri,'area4');  source6(i) = read_obj6(stri(ind6));
+    ind7  = contains(stri,'area5');  source7(i) = read_obj7(stri(ind7));
 end
-% load saraGEOM GEOM
-fprintf('%4.3f s\n',cputime-tt)
 
 %% READS GMPE LIBRRY
 str = data(ptrs(4,1):ptrs(4,2),:);
 Ngmpe = size(str,1);
-GMPELIB(1:Ngmpe) = struct('label',[],'type',[],'handle',[],'T',[],'usp',[],'Rmetric',[],'Residuals',[],'cond',[],'var',[]);
+GMMLIB(1:Ngmpe,1) = createObj('gmmlib');
 
 methods = pshatoolbox_methods(1);
 strs    = {methods.str};
 
 for i=1:size(str,1)
     linea = regexp(str{i},'\s+','split');
-    GMPELIB(i).label=linea{1};
-    linea = linea(2:end);
-    [~,B]  = intersect(linea,{'handle'});
-    model  = linea{B+1};
-    [~,C]  = intersect(strs,model);
-    GMPELIB(i).type  = methods(C).type;
-    GMPELIB(i).handle=str2func(model);
-    [GMPELIB(i).T,GMPELIB(i).Rmetric,GMPELIB(i).Residuals]=mGMPE_info(model);
-    linea(B:B+1)=[];
+    GMMLIB(i).txt=linea;
+    GMMLIB(i).label=linea{2};
+    linea = linea(3:end);
+    model  = linea{1};
+    [~,cgm]  = intersect(strs,model);
+    GMMLIB(i).type  = methods(cgm).type;
+    GMMLIB(i).handle=str2func(model);
+    [GMMLIB(i).T,GMMLIB(i).Rmetric,GMMLIB(i).Residuals]=mGMPE_info(model);
     
-    clearvars usp
-    np = length(linea);
-    for ii=1:np/2
-        if any(strcmp(linea{2*ii-1},{'method'}))
-            usp.(linea{2*ii-1})=linea{2*ii};
-        else
-            usp.(linea{2*ii-1})=lower(linea{2*ii});
-        end
-    end
-    usp = uspconvert(usp);
-    
-    [~,B6]  = intersect(linea,{'sigma'});
-    if ~isempty(B6)
-        B6=B6+1;
-        usp.sigma={linea{B6},str2double(linea{B6+1})};
+    if strcmpi(linea{1},'udm')
+        GMMLIB(i).usp=linea(2:end);
     else
-        usp.sigma=[];
+        txt = lower(linea(2:end));
+        num = str2double(txt);
+        isd = ~isnan(num);
+        txt(isd)=num2cell(num(isd));
+        GMMLIB(i).usp=txt;
     end
-    
-    GMPELIB(i).usp=usp;
 end
 
 meth  = pshatoolbox_methods(1);
 str   = {meth.str};
 typ   = {meth.type};
 
-% PROCESS USER DEFINED MODELS
+% PRE-PROCESS USER DEFINED MODELS
 Rm = zeros(0,11);
-for i=1:length(GMPELIB)
-    hnd = func2str(GMPELIB(i).handle);
+for i=1:length(GMMLIB)
+    hnd = func2str(GMMLIB(i).handle);
     [~,b]=intersect(str,hnd);
     if strcmp(typ{b},'udm')
-        var = feval(GMPELIB(i).usp.method);
-        GMPELIB(i).T  = var.IM.value;
-        GMPELIB(i).Residuals=var.residuals;
-        flds = fields(var);
-        for jj=1:length(flds)
-            if isfield(var.(flds{jj}),'tag')
-                f = var.(flds{jj});
+        var = feval(GMMLIB(i).usp{1});
+        GMMLIB(i).T  = var.IM.value;
+        GMMLIB(i).Residuals=var.residuals;
+        siteudp = fields(var);
+        for jj=1:length(siteudp)
+            if isfield(var.(siteudp{jj}),'tag')
+                f = var.(siteudp{jj});
                 if strcmp(f.tag,'Distance')
                     Rm=[Rm;f.value];
                 end
             end
         end
-        GMPELIB(i).Rmetric = sum(Rm,1)>0;
-        GMPELIB(i).var     = var;
+        GMMLIB(i).Rmetric = sum(Rm,1)>0;
+        GMMLIB(i).var     = var;
     end
 end
 
-% PROCESS CONDITIONAL MODELS
-for i=1:length(GMPELIB)
-    hnd = func2str(GMPELIB(i).handle);
+% PRE-PROCESS CONDITIONAL MODELS
+for i=1:length(GMMLIB)
+    hnd = func2str(GMMLIB(i).handle);
     [~,b]=intersect(str,hnd);
     if strcmp(typ{b},'cond')
-        usp = GMPELIB(i).usp;
-        [~,Rmetric]        = mGMPE_info(usp.conditioning);
-        [~,b] = intersect(lower(str),usp.conditioning);
-        cond.conditioning   = meth(b).func;
-        GMPELIB(i).usp      = rmfield(usp,'conditioning');
-        GMPELIB(i).cond     = cond;
-        GMPELIB(i).Rmetric  = Rmetric;
+        usp = GMMLIB(i).usp;
+        
+        for j=1:length(usp)
+            if ~ischar(usp{j})
+                usp{j}=num2str(usp{j});
+            end
+        end
+        
+        [~,Rmetric1]       = mGMPE_info(hnd);
+        [~,b,c]            = intersect(lower(str),usp);
+        GMMLIB(i).usp      = usp(c+1:end);
+        GMMLIB(i).cond     = meth(b).func;
+        [~,Rmetric2]       = mGMPE_info(meth(b).str);
+        GMMLIB(i).Rmetric  = or(Rmetric1,Rmetric2);
     end
 end
 
-% PROCESS FRANKY MODELS
-for i=1:length(GMPELIB)
-    hnd = func2str(GMPELIB(i).handle);
+% PRE-PROCESS FRANKY MODELS
+for i=1:length(GMMLIB)
+    hnd = func2str(GMMLIB(i).handle);
     [~,b]=intersect(str,hnd);
     if strcmp(typ{b},'frn')
-        usp = GMPELIB(i).usp;
-        fld  = fields(usp);
-        Ndepend              = length(fld)-1;
-        GMPELIB(i).Residuals = 'lognormal';
+        usp     = cell2mat(GMMLIB(i).usp);
+        Ndepend = length(usp);
+        GMMLIB(i).Residuals = 'lognormal';
         for j=1:Ndepend
-            val  = GMPELIB(i).usp.(fld{j});
-            GMMJ = upper(fld{j});
-            GMPELIB(i).usp.(GMMJ) = GMPELIB(val);
-            GMPELIB(i).T          = [GMPELIB(i).T,GMPELIB(val).T];
-            GMPELIB(i).Rmetric    = [GMPELIB(i).Rmetric;GMPELIB(val).Rmetric];
+            val  = usp(j);
+            GMMLIB(i).usp{j}  = GMMLIB(val);
+            GMMLIB(i).T       = [GMMLIB(i).T,GMMLIB(val).T];
+            GMMLIB(i).Rmetric = [GMMLIB(i).Rmetric;GMMLIB(val).Rmetric];
         end
-        GMPELIB(i).usp.Ndepend = Ndepend;
-        GMPELIB(i).T           = unique(GMPELIB(i).T);
-        GMPELIB(i).Rmetric     = any(GMPELIB(i).Rmetric);
-        
+        GMMLIB(i).T           = unique(GMMLIB(i).T);
+        GMMLIB(i).Rmetric     = any(GMMLIB(i).Rmetric,1);
     end
 end
 
-% READS GMPE GROUP DATA
+%% READS GMM
 str = data(ptrs(5,1):ptrs(5,2),:);
-clear GMPEGROUP
-GMPE(1:size(str,1)) = struct('id',[],'ptrs',[]);
-for i=1:size(str,1)
-    linea = regexp(str{i},'\ pointers ','split');
-    GMPE(i).id=linea{1};
-    linea = regexp(linea{2},'\s+','split');
-    GMPE(i).ptrs=str2double(linea);
+Ng = size(str,1);
+id = cell(Ng,1);
+ptr = [];
+for i=1:Ng
+    linea = regexp(str{i},'\ ','split');
+    id{i} =linea{2};
+    ptr = [ptr;str2double(linea(3:end))];
 end
+GMM.id  = id;
+GMM.ptr = ptr;
+GMM.type = ~strcmp({GMMLIB(ptr(:,1)).type}','pce');
 
-%% READS MAGNITUDE SCALING
-tt=cputime;
-fprintf('%-20s','Reading MSCL:')
+%% READ MAGNITUDE SCALING RELATIONS
 str = data(ptrs(6,1):ptrs(6,2),:);
 pt  = zeros(Nmscl,2); j=1;
 pt(end)=size(str,1);
-MSCL(1:Nmscl) = struct('id',[],'seismicity',[]);
+ms = createObj('mscl');
+mscl1 (1:Nmscl,1)= ms;
+mscl2 (1:Nmscl,1)= ms;
+mscl3 (1:Nmscl,1)= ms;
+mscl4 (1:Nmscl,1)= ms;
+mscl5 (1:Nmscl,1)= ms;
+mscl6 (1:Nmscl,1)= ms;
+mscl7 (1:Nmscl,1)= ms;
+
 for i=1:size(str,1)
     if ~isempty(strfind(str{i},'seismicity'))
-        s=regexp(str{i},'\ ','split');
-        MSCL(j).id     = horzcat2(s{3:end});
         pt(j,1)=i+1;
         if j>1
             pt(j-1,2)=i-1;
@@ -287,259 +307,218 @@ for i=1:size(str,1)
 end
 
 for i=1:Nmscl
-    MSCL(i).seismicity = readSeismicity(str(pt(i,1):pt(i,2)));
+    stri = str(pt(i,1):pt(i,2));                                                           
+    ind1  = contains(stri,'delta');       mscl1(i) = read_mscl1(stri(ind1),'delta');    
+    ind2  = contains(stri,'truncexp');    mscl2(i) = read_mscl1(stri(ind2),'truncexp'); 
+    ind3  = contains(stri,'truncnorm');   mscl3(i) = read_mscl1(stri(ind3),'truncnorm');
+    ind4  = contains(stri,'yc1985');      mscl4(i) = read_mscl1(stri(ind4),'yc1985');   
+    ind5  = contains(stri,'magtable');    mscl5(i) = read_mscl2(stri(ind5)); 
+    ind6  = contains(stri,'catalog');     mscl6(i) = read_mscl3(stri(ind6)); 
+    ind7  = contains(stri,'trexpub');     mscl7(i) = read_mscl1(stri(ind7),'trexpub'); 
 end
-% load saraMSCL MSCL
-fprintf('%4.3f s\n',cputime-tt)
-
-%% READS RUPTURE AREA DATA
-tt=cputime;
-fprintf('%-20s','Reading RUPT:')
-str = data(ptrs(7,1):ptrs(7,2),:);
-RUPT(1:size(str,1)) = struct('id',[],'type',[],'spacing',[],'nref',0,'slices',[],'taper',[],'RA',[],'aratio',[]);
-
-for i=1:size(str,1)
-    linea = regexp(str{i},'\s+','split');
-    RUPT(i).id   = linea{1};
-    
-    [~,B] = intersect(linea,'type');  RUPT(i).type = linea{B+1};
-    [~,B] = intersect(linea,'spacing');   if ~isempty(B), RUPT(i).spacing  = str2double(linea{B+1});end
-    [~,B] = intersect(linea,'nref');      if ~isempty(B), RUPT(i).nref     = str2double(linea{B+1});end
-    [~,B] = intersect(linea,'taper');     if ~isempty(B), RUPT(i).taper    = eval(linea{B+1});end
-    [~,B] = intersect(linea,'aratio');    if ~isempty(B), RUPT(i).aratio   = str2double(linea{B+1});end
-    [~,Bth] = intersect(linea,'slices');  if ~isempty(Bth), RUPT(i).slices = str2double(linea{Bth+1}); end
-    
-    [~,B]  = intersect(linea,{'RA'});
-    if ~isempty(B)
-        B=B+1;
-        switch linea{B}
-            case 'custom'
-                param = cellfun(@str2double, linea(:,B+1:B+3));
-            otherwise
-                param =[];
-        end
-        RUPT(i).RA={linea{B},param};
-    end
-end
-% load saraRUPT RUPT
-fprintf('%4.3f s\n',cputime-tt)
 
 %% READS SITES
-tt=cputime;
-fprintf('%-20s','Reading SITES:')
-h.id        = cell(0,1);
-h.p         = zeros(0,3);
-h.Vs30      = zeros(0,1);
-h.t         = cell(0,2);
-h.shape     = [];
+h = createObj('site');
+if ~isnan(ptrs(7,1))
+    str = data(ptrs(7,1):ptrs(7,2),:);
+    newline = regexp(str{1},'\ ','split');
+    Nelem   = length(newline);
+    if Nelem==1 && contains(newline,'.txt')
+        str = regexp(str{1},'\ ','split');
+        str = ss_readtxtPSHA(str);
+    end
+    str    = regexp(str,'\ ','split');
+    str    = vertcat(str{:});
+    h.id   = str(:,1);
+    h.p    = str2double(str(:,2:4));
+    h.p(:,3)=h.p(:,3)/1000; % elelation must be input in meters a.m.s.l
+    str(:,1:4)=[];
+    h.param=str(1,1:2:end);
+    str(:,1:2:end)=[];
+    h.value =str2double(str);
+end
 
+%% READ LAYERS
 if ~isnan(ptrs(8,1))
     str = data(ptrs(8,1):ptrs(8,2),:);
+    Nlayers = size(str,1);
     
-    newline = regexp(str{1},'\ ','split');
-    newline(1)=[];
-    Nline   = length(newline);
-    VS30.baseline = str2double(newline{Nline});
-    if Nline>1
-        VS30.source   = strrep(newline(1:Nline-1),'''','');
-    else
-        VS30.source  = {' '};
+    for ii=1:Nlayers
+        str_i = regexp(str{ii},'\ ','split');
+        dat   = str_i(3:end);
+        dat2  = str2double(dat);
+        dat(~isnan(dat2))=num2cell(dat2(~isnan(dat2)));
+        layer.(str_i{2})=dat(:);
     end
-    str(1)=[];
     
-    if contains(str,'.txt')
-        str=regexp(str{1},'\ ','split');
-        h = ss_readtxtPSHA(str{1});
-    else
-        
-        for i=1:size(str,1)
-            if contains(str{i},'Vs30')
-                linea = regexp(str{i},'\s+','split');
-                id          = strjoin(linea(1:end-5),' ');
-                Lat         = str2double(linea{end-4});
-                Lon         = str2double(linea{end-3});
-                Elev        = str2double(linea{end-2})/1000;
-                Vs30        = str2double(linea{end});
-                h.id{i}  = id;
-                h.p(i,:)    = [Lat,Lon,Elev];
-                h.Vs30(i,1) = Vs30;
-            end
+    for ii=1:length(h.param)
+        fd  =h.param{ii};
+        IND = isnan(h.value(:,ii));
+        if any(IND)
+           h.value(IND,ii)=layerdatainterp(h.p(IND,1:2),layer.(fd),fd);
         end
-        
-        for i=1:size(str,1)
-            if ~contains(str{i},'Vs30')
-                linea = regexp(str{i},'\s+','split');
-                id       = strjoin(linea(1:end-3),' ');
-                Lat      = str2double(linea{end-2});
-                Lon      = str2double(linea{end-1});
-                Elev     = str2double(linea{end})/1000;
-                h.id{i}  = id;
-                h.p(i,:) = [Lat,Lon,Elev];
-                h.Vs30(i,1) = nan;
-            end
-        end
-    end
-    IND = find(isnan(h.Vs30));
-    if ~isempty(IND)
-        h.Vs30(IND)=getVs30(h.p(IND,1:2),VS30);
     end
 else
-    VS30.baseline=760;
-    VS30.source  ={' '};
+    layer=createObj('defaultlayers');
 end
-fprintf('%4.3f s\n',cputime-tt)
+
 
 %% READS VALIDATION HAZARD CURVES (optional)
 do_validation=0;
 if ~isnan(ptrs(9,1))
     do_validation=1;
-    str = data(ptrs(9,1):ptrs(9,2),:);
-    linea = regexp(str{1},'\s+','split');
-    IM    = str2double(linea(2:end));
-    Nsites = size(str,1)-1;
-    lambdaTest = zeros(Nsites,length(IM));
+    str     = data(ptrs(9,1):ptrs(9,2),:);
+    linea   = regexp(str{1},'\s+','split');
+    imtest  = str2double(linea(2:end));
+    Nsites  = size(str,1)-1;
+    haztest = zeros(Nsites,length(imtest));
     for i=2:Nsites+1
         linea = regexp(str{i},'\s+','split');
-        lambdaTest(i-1,:)= str2double(linea(2:end));
+        haztest(i-1,:)= str2double(linea(2:end));
     end
 end
 
-%% COMPUTES SYSTEM VARIABLE
-sys.filename = filename;
-sys.DATA     = data;
-sys.PTRS     = ptrs;
-sys.BRANCH   = branch;
-sys.WEIGHT   = weight;
-sys.GEOM     = GEOM;
-sys.GMPE     = GMPE;
-sys.MSCL     = MSCL;
-sys.RUPT     = RUPT;
-sys.GMPELIB  = GMPELIB;
-sys.VS30     = VS30;
+%% ASSEMBLE SYS
+sys.ptrs      = ptrs;
+sys.weight    = weight;
+sys.branch    = branch;
+sys.gmmid     = GMM.id;
+sys.gmmptr    = GMM.ptr;
+sys.isREG     = find( GMM.type(sys.branch(:,2)))'; %1 for regular models, 0 for pce models
+sys.isPCE     = find(~GMM.type(sys.branch(:,2)))'; %1 for regular models, 0 for pce models
+sys.src1      = source1; clear source1
+sys.src2      = source2; clear source2
+sys.src3      = source3; clear source3
+sys.src4      = source4; clear source4
+sys.src5      = source5; clear source5
+sys.src6      = source6; clear source6
+sys.src7      = source7; clear source7
+sys.mrr1      = mscl1;
+sys.mrr2      = mscl2;
+sys.mrr3      = mscl3;
+sys.mrr4      = mscl4;
+sys.mrr5      = mscl5;
+sys.mrr6      = mscl6;
+sys.mrr7      = mscl7;
+sys.gmmlib    = GMMLIB;
+sys.layer     = layer;
+sys.validation= [];
+
 if do_validation
-    sys.IM = IM;
-    sys.lambdaTest = lambdaTest;
+    sys.validation  = [imtest;haztest];
 end
 
-function[y]=readGeometry(str)
+%% PROCESS MODEL
+n=max(sys.branch(:,1:3),[],1);
+Nsrc = zeros(7,n(1));
 
-Ns    = size(str,1);
-y(1:Ns)=struct(...
-    'label',[],...
-    'datasource',[],...
-    'datasourceindx',[],...
-    'type',[],...
-    'mechanism',[],...
-    'surface' ,[],...
-    'vertices',[],...
-    'thickness',[],...
-    'gptr',[],...
-    'geom',[]);
-for i=1:Ns
-    line = regexp(str{i},'\s+','split');
-    y(i).label      = line{1};
+for i=1:n(1)
+    sys.src1(i)  = process_obj1(sys.src1(i) , opt.ellipsoid); Nsrc(1,i)=size(sys.src1(i).txt,1);
+    sys.src2(i)  = process_obj2(sys.src2(i) , opt.ellipsoid); Nsrc(2,i)=size(sys.src2(i).txt,1);
+    sys.src3(i)  = process_obj3(sys.src3(i) , opt.ellipsoid); Nsrc(3,i)=size(sys.src3(i).txt,1);
+    sys.src4(i)  = process_obj4(sys.src4(i) , opt.ellipsoid); Nsrc(4,i)=size(sys.src4(i).txt,1);
+    sys.src5(i)  = process_obj5(sys.src5(i) , opt.ellipsoid); Nsrc(5,i)=size(sys.src5(i).txt,1);
+    sys.src6(i)  = process_obj6(sys.src6(i) , opt.ellipsoid); Nsrc(6,i)=size(sys.src6(i).txt,1);
+    sys.src7(i)  = process_obj7(sys.src7(i) , opt.ellipsoid); Nsrc(7,i)=size(sys.src7(i).txt,1);
+end
+
+% process magnitude recurrence relations
+Nmrr = zeros(7,n(3));
+for i=1:n(3)
+    sys.mrr1(i) = process_delta     (sys.mrr1(i));                    Nmrr(1,i)=size(sys.mrr1(i).source,1);
+    sys.mrr2(i) = process_truncexp  (sys.mrr2(i) , opt.MagDiscrete);  Nmrr(2,i)=size(sys.mrr2(i).source,1);
+    sys.mrr3(i) = process_truncnorm (sys.mrr3(i) , opt.MagDiscrete);  Nmrr(3,i)=size(sys.mrr3(i).source,1);
+    sys.mrr4(i) = process_yc1985    (sys.mrr4(i) , opt.MagDiscrete);  Nmrr(4,i)=size(sys.mrr4(i).source,1);
+    sys.mrr5(i) = process_magtable  (sys.mrr5(i));                    Nmrr(5,i)=size(sys.mrr5(i).source,1);
     
-    % mandatory parameters
-    [~,B]=intersect(line,{'type','gmpe','vertices'},'stable'); B=B+1;
-    y(i).type       = line{B(1)};
-    y(i).gptr       = str2double(line{B(2)});
-    
-    % optional parameter
-    [~,Bst]=intersect(line,'mechanism');
-    if ~isempty(Bst)
-        y(i).mechanism   = line{Bst+1};
+    if ~isempty(sys.mrr6(i).source)
+        sys.mrr6(i) = process_catalog   (sys.mrr6(i),sys.src3(i),opt.MagDiscrete);  Nmrr(6,i)=size(sys.mrr6(i).source,1);
     end
-    
-    [~,Bsf]=intersect(line,'surface');
-    if ~isempty(Bsf)
-        y(i).surface   = str2double(line{Bsf+1});
-    end
-    
-    [~,Bth]=intersect(line,'thickness');
-    if ~isempty(Bth)
-        y(i).thickness = str2double(line{Bth+1});
-    end
-    
-    [~,C]=intersect(line,'strike');
-    if ~isempty(C)
-        y(i).geom.strike = str2double(line{C+1});
-    end
-    
-    [~,C]=intersect(line,'dip');
-    y(i).geom.dip=nan;
-    if ~isempty(C)
-        y(i).geom.dip = str2double(line{C+1});
-    end
-    
-    [~,C]=intersect(line,'rake');
-    y(i).geom.rake=nan;
-    if ~isempty(C)
-        y(i).geom.rake = str2double(line{C+1});
-    end
-    
-    % This is to support geometries from a matfile, e.g. Poulos
-    if isempty(strfind(line{B(3)},'.mat'))
-        vertices = cellfun(@str2double, line(:,B(3):end));
-        vertices = reshape(vertices,3,length(vertices)/3)';
-        y(i).vertices = vertices;
-        y(i).datasource = [];
-    else
-        z=load(line{B(3)});
-        datasourceindx=str2double(line{10});
-        z=z.geom(datasourceindx);
-        y(i).vertices = z.vertices;
-        y(i).datasource = line{B(3)};
-        y(i).datasourceindx = datasourceindx;
+    sys.mrr7(i) = process_trexpub (sys.mrr7(i) , opt.MagDiscrete);  Nmrr(7,i)=size(sys.mrr7(i).source,1);
+end
+
+%% RETRIEVE LABELS
+labelG = cell(1,n(1));
+labelM = cell(1,n(3));
+numG   = cell(1,n(1));
+numM   = cell(1,n(3));
+
+for i=1:n(1)
+    labelG{i} = [
+        sys.src1(i).txt;
+        sys.src2(i).txt;
+        sys.src3(i).txt;
+        sys.src4(i).txt;
+        sys.src5(i).txt;
+        sys.src6(i).txt;
+        sys.src7(i).txt];
+    numG{i}   =[
+        ones(Nsrc(1,i),1)*1,(1:Nsrc(1,i))';
+        ones(Nsrc(2,i),1)*2,(1:Nsrc(2,i))';
+        ones(Nsrc(3,i),1)*3,(1:Nsrc(3,i))';
+        ones(Nsrc(4,i),1)*4,(1:Nsrc(4,i))';
+        ones(Nsrc(5,i),1)*5,(1:Nsrc(5,i))';
+        ones(Nsrc(6,i),1)*6,(1:Nsrc(6,i))';
+        ones(Nsrc(7,i),1)*7,(1:Nsrc(7,i))'];
+end
+
+for i=1:n(3)
+    labelM{i} =[
+        sys.mrr1(i).source;
+        sys.mrr2(i).source;
+        sys.mrr3(i).source;
+        sys.mrr4(i).source;
+        sys.mrr5(i).source;
+        sys.mrr6(i).source];
+    numM{i}=[
+        ones(Nmrr(1,i),1)*1,(1:Nmrr(1,i))';
+        ones(Nmrr(2,i),1)*2,(1:Nmrr(2,i))';
+        ones(Nmrr(3,i),1)*3,(1:Nmrr(3,i))';
+        ones(Nmrr(4,i),1)*4,(1:Nmrr(4,i))';
+        ones(Nmrr(5,i),1)*5,(1:Nmrr(5,i))';
+        ones(Nmrr(6,i),1)*6,(1:Nmrr(6,i))'];
+end
+
+cgm = cell(n(1),n(3));
+for i=1:n(1)
+    for j=1:n(3)
+        [~,~,cgm{i,j}]=intersect(labelG{i},labelM{j},'stable');
     end
 end
 
-function[y]=readSeismicity(str)
-
-Ns = size(str,1);
-y(1:Ns)=struct(...
-    'source',[],...
-    'handle',[],...
-    'msparam',[]);
-
-for i=1:Ns
-    linea = regexp(str{i},'\s+','split');
-    y(i).source = linea{1};
-    linea(1)=[];
-    [~,B]  = intersect(linea,{'handle'});
-    y(i).handle=str2func(linea{B+1});
-    
-    usp=struct;
-    if strcmp(linea{B+1},'magtable')
-        linea(B:B+1)=[];
-        
-        [~,C]=intersect(linea,'minmag');
-        if ~isempty(C)
-            usp.minmag= str2double(linea{C+1});
-        end
-        
-        [~,C]=intersect(linea,'binwidth');
-        if ~isempty(C)
-            usp.binwidth= str2double(linea{C+1});
-        end
-        
-        [~,C]=intersect(linea,'occurrates');
-        if ~isempty(C)
-            usp.lambdaM= str2double(linea(C+1:end))';
-        end
-
-    else
-        linea(B:B+1)=[];
-        
-        np = length(linea);
-        for ii=1:np/2
-            fldname = linea{2*ii-1};
-            if strcmp(fldname,'catalog')
-                value   = lower(linea{2*ii});
-            else
-                value   = str2double(lower(linea{2*ii}));
-            end
-            usp.(fldname) = value;
-        end
-    end
-    y(i).msparam = usp;
+mech =cell(1,n(1));
+for i=1:n(1)
+    mech{i}=[
+        sys.src1(i).num(:,1);
+        sys.src2(i).num(:,1);
+        sys.src3(i).num(:,1);
+        sys.src4(i).num(:,1);
+        sys.src5(i).num(:,1);
+        sys.src6(i).num(:,1);
+        sys.src7(i).num(:,1);];
 end
+
+% sys.Epistemic = Epistemic;
+sys.labelG    = labelG;
+sys.labelM    = labelM;
+sys.numG      = numG;
+sys.numM      = numM;
+sys.Nsrc      = Nsrc;
+sys.Nmrr      = Nmrr;
+sys.cgm       = cgm;
+sys.mech      = mech;
+sys.txtPSDA   = [];
+sys.txtLIBS   = [];
+
+%% EXTRACTS PSDA TEXT
+pt = min(ptrs(10:14,1)):max(ptrs(10:14,2));
+if ~isnan(pt)
+    sys.txtPSDA = data(pt);
+end
+
+%% EXTRACTS LIBS TEXT
+pt = min(ptrs(15:18,1)):max(ptrs(15:18,2));
+if ~isnan(pt)
+    sys.txtLIBS = data(pt);
+end
+

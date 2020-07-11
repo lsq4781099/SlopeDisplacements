@@ -12,8 +12,7 @@ set(h_fig,'Pointer','cross');
 ch     = findall(h_fig,'tag','patchselect');delete(ch);
 h_lin  = findall(h_fig,'type','line');
 h_img  = findall(h_fig,'type','image');
-h_ras  = findall(h_fig,'tag','raster');
-h_mic  = findall(h_fig,'tag','microzone');
+h_lay  = findall(h_fig,'tag','layer');
 h_atp  = patch('parent',h_ax,...
     'vertices',[],...
     'faces',[],...
@@ -27,8 +26,7 @@ h_atp  = patch('parent',h_ax,...
 set(h_ax  ,'ButtonDownFcn', clickfun);
 set(h_lin ,'ButtonDownFcn', clickfun);
 set(h_img ,'ButtonDownFcn', clickfun);
-set(h_ras ,'ButtonDownFcn', clickfun);
-set(h_mic ,'ButtonDownFcn', clickfun);
+set(h_lay ,'ButtonDownFcn', clickfun);
 set(h_fig ,'WindowButtonMotionFcn', motionfun)
 
 waitforbuttonpress;
@@ -39,7 +37,7 @@ set(h_ax  ,'ButtonDownFcn', []);
 set(h_lin ,'ButtonDownFcn', []);
 set(h_atp ,'ButtonDownFcn', []);
 set(h_img ,'ButtonDownFcn', []);
-set(h_ras ,'ButtonDownFcn', []);
+set(h_lay ,'ButtonDownFcn', []);
 set(h_fig,'Pointer','arrow');
 
 function clickline(object, eventdata) %#ok<*INUSL>

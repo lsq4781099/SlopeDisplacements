@@ -31,6 +31,7 @@ set(ch(handles.text),'Visible','off')
 set(ch(handles.edit),'Visible','off','Style','edit');
 meth=pshatoolbox_methods(5);
 meth=meth(vertcat(meth.isregular));
+handles.meth        = meth;
 handles.Dpop.String ={meth.label};
 handles.Dpop.Value  =1;
 
@@ -64,17 +65,6 @@ guidata(hObject, handles);
 
 function varargout = DmodelExplorer_OutputFcn(hObject, eventdata, handles) 
 varargout{1} = handles.output;
-
-function handles = ffSMLIB(handles)
-val = handles.listbox1.Value;
-str = handles.SMLIB(val).str;
-meth = pshatoolbox_methods(5);
-[~,B]=intersect({meth.str},str);
-handles.Dpop.Value=B;
-ch=get(handles.panel2,'children');
-set(ch(handles.text),'Visible','off')
-set(ch(handles.edit),'Visible','off','Style','edit');
-handles = dDISPdefault(handles,ch(handles.text),ch(handles.edit));
 
 function Dpop_Callback(hObject, eventdata, handles) 
 
@@ -127,3 +117,14 @@ function listbox1_Callback(hObject, eventdata, handles)
 handles = ffSMLIB(handles);
 plotDmodel(handles)
 guidata(hObject,handles)
+
+function handles = ffSMLIB(handles)
+val = handles.listbox1.Value;
+str = handles.SMLIB(val).str;
+meth = handles.meth;
+[~,B]=intersect({meth.str},str);
+handles.Dpop.Value=B;
+ch=get(handles.panel2,'children');
+set(ch(handles.text),'Visible','off')
+set(ch(handles.edit),'Visible','off','Style','edit');
+handles = dDISPdefault(handles,ch(handles.text),ch(handles.edit));

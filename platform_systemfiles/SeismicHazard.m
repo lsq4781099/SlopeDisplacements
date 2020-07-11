@@ -18,7 +18,7 @@ end
 function SeismicHazard_OpeningFcn(hObject, eventdata, handles, varargin) %#ok<*INUSL>
 home
 fprintf(' --------- Seismic Hazard Toolbox ---------\n')
-load pshabuttons c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 c11 c12
+load pshabuttons c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 c11 c12 c13
 handles.form1                      = c1;
 handles.form2                      = c2;
 handles.engine.CData               = c3;
@@ -31,25 +31,26 @@ handles.po_refresh_GE.CData        = c9;
 handles.RefreshButton.CData        = c10;
 handles.OpenRef.CData              = c11;
 handles.ColorSecondaryLines.CData  = c12;
+handles.restore_axis.CData         = c13;
 handles.GoogleEarthOpt             = GEOptions('default');
+initializePSHA
 
-if nargin==3
-    handles                  = initializePSHA(handles);
-elseif nargin==4
+if nargin==4
     fname = varargin{1};
-    handles=psha_updatemodel(handles,[],fname);
+    [handles.sys,handles.opt,handles.h]=psha_updatemodel([],fname);
+    house_keeping1
     handles.launch_PSDA.Enable='off';
-    plot_sites_PSHA(handles);
+    plot_sites_PSHA
 end
 akZoom(handles.ax1)
 guidata(hObject, handles);
-% uiwait(handles.FIGSeismicHazard);
+% uiwait(handles.fig);
 
-function varargout = SeismicHazard_OutputFcn(hObject, eventdata, handles)
-varargout{1}=handles;
-% delete(handles.FIGSeismicHazard)
+function varargout = SeismicHazard_OutputFcn(~, ~, ~)
+varargout{1}=[];
+% delete(handles.fig)
 
-function FIGSeismicHazard_CloseRequestFcn(hObject, eventdata, handles)
+function fig_CloseRequestFcn(hObject, ~, ~)
 % if isequal(get(hObject,'waitstatus'),'waiting')
 %     uiresume(hObject);
 % else
@@ -58,44 +59,25 @@ function FIGSeismicHazard_CloseRequestFcn(hObject, eventdata, handles)
 delete(hObject);
 
 % -----FILE MENU ----------------------------------------------------------
-function File_Callback(hObject, eventdata, handles) %#ok<*DEFNU,*INUSD>
+function File_Callback(~, ~, ~) %#ok<*DEFNU>
 
-function Reset_Callback(hObject, eventdata, handles)
-if isfield(handles,'sys')
-    handles = rmfield(handles,{'sys','model','opt'});
-end
-handles = initializePSHA(handles);
+function Reset_Callback(hObject, ~, handles)
+initializePSHA;
 guidata(hObject, handles);
 
 function Clear_Analysis_Callback(hObject, eventdata, handles)
-handles = delete_analysis_PSHA(handles);
-plot_sites_PSHA(handles);
+delete_analysis_PSHA
+plot_sites_PSHA
 guidata(hObject, handles);
 
 function InspectInputFile_Callback(hObject, eventdata, handles)
-if isfield(handles,'sys')
+if ~isempty(handles.sys)
     if ispc,winopen(handles.sys.filename);end
 end
 
-function LoadSession_Callback(hObject, eventdata, handles)
-[filename,pathname,FILTERINDEX]=uigetfile('*.mat','Seismic Hazard');
-if FILTERINDEX==0
-    return
-end
-load([pathname,filename]) %#ok<LOAD>
-handles=loadpreviousPSHA(handles,statevar);
-guidata(hObject,handles)
+function LoadTXT_Callback(~, ~, ~)
 
-function SaveSession_Callback(hObject, eventdata, handles)
-[filename,pathname,FILTERINDEX]=uiputfile('*.mat','Seismic Hazard');
-if FILTERINDEX==0
-    return
-end
-statevar=buildoutstruct(handles,pathname,filename);
-
-function LoadTXT_Callback(hObject, eventdata, handles)
-
-function DefaultSeismicity_Callback(hObject, eventdata, handles)
+function DefaultSeismicity_Callback(hObject, ~, handles)
 anw = listdlg('PromptString','Default Seismicity Models:',...
     'SelectionMode','single','ListSize',[200 300],...
     'ListString',{...
@@ -104,26 +86,26 @@ anw = listdlg('PromptString','Default Seismicity Models:',...
     'Peru (SENCICO, 2016)',...
     'Mexico (2019)',...
     'Ciudad Universitaria, Mexico (2019)',...
+    'Ecuador',...
+    'Colombia',...
     'USGS (NSHM 2008 Dynamic)',...
     'USGS (NSHM 2014 Dynamic)'});
 if isempty(anw)
     return
 end
+initializePSHA;
 switch anw
-    case 1,  handles=psha_updatemodel(handles,'Chile_Default');
-    case 2,  handles=psha_updatemodel(handles,'Chile_Poulos');
-    case 3,  handles=psha_updatemodel(handles,'Peru_Default');
-    case 4,  handles=psha_updatemodel(handles,'Mexico_Default_not_CU');
-    case 5,  handles=psha_updatemodel(handles,'MexicoCity_CU_PreviousTectonic_2018_f2');
-    case 6,  handles=usgs_updatemodel(handles,'USGS_NHSM_2008');
-    case 7,  handles=usgs_updatemodel(handles,'USGS_NHSM_2014');
+    case 1,  [handles.sys,handles.opt,handles.h]=psha_updatemodel('Chile_Default'); house_keeping1;
+    case 2,  [handles.sys,handles.opt,handles.h]=psha_updatemodel('Chile_Poulos');  house_keeping1;
+    case 3,  [handles.sys,handles.opt,handles.h]=psha_updatemodel('Peru_Default');  house_keeping1;
+    case 4,  [handles.sys,handles.opt,handles.h]=psha_updatemodel('Mexico_Default_not_CU'); house_keeping1;
+    case 5,  [handles.sys,handles.opt,handles.h]=psha_updatemodel('MexicoCity_CU_PreviousTectonic_2018_f2'); house_keeping1;
+    case 6,  [handles.sys,handles.opt,handles.h]=psha_updatemodel('Ecuador_Default'); house_keeping1;
+    case 7,  [handles.sys,handles.opt,handles.h]=psha_updatemodel('Colombia_Default'); house_keeping1;
+    case 8,  handles=usgs_updatemodel(handles,'USGS_NHSM_2008');
+    case 9,  handles=usgs_updatemodel(handles,'USGS_NHSM_2014');
 end
-
-plot_sites_PSHA(handles);
-
-if isfield(handles.sys,'lambdaTest')
-    plot(handles.ax2,handles.sys.IM,handles.sys.lambdaTest(1,:),'ko','tag','lambdaTest');
-end
+plot_sites_PSHA
 guidata(hObject,handles)
 
 function TestModels_Callback(hObject, eventdata, handles)
@@ -135,18 +117,10 @@ anw = listdlg('PromptString','Test Models:',...
 if isempty(anw)
     return
 end
-handles  =psha_updatemodel(handles,[],fullfile(W.path,D(anw).name));
-plot_sites_PSHA(handles);
-if isfield(handles.sys,'lambdaTest')
-    plot(handles.ax2,handles.sys.IM,handles.sys.lambdaTest(1,:),'ko','tag','lambdaTest');
-end
-if ispc
-    pdffile = fullfile(W.path,strrep(D(anw).name,'.txt','.pdf'));
-   if exist(pdffile,'file')
-       handles.pdffile = pdffile;
-       handles.OpenRef.Visible='on';
-   end
-end
+initializePSHA;
+[handles.sys,handles.opt,handles.h]=psha_updatemodel([],fullfile(W.path,D(anw).name));
+house_keeping1
+plot_sites_PSHA
 
 guidata(hObject, handles);
 
@@ -159,45 +133,33 @@ anw = listdlg('PromptString','PEER 2018 Validation Tests:',...
 if isempty(anw)
     return
 end
-
+initializePSHA;
 switch anw
-    case 1,  handles=psha_updatemodel(handles,'PEER2018_Set1_Test1_1');
-    case 2,  handles=psha_updatemodel(handles,'PEER2018_Set1_Test1_2');
-    case 3,  handles=psha_updatemodel(handles,'PEER2018_Set1_Test1_3');
-    case 4,  handles=psha_updatemodel(handles,'PEER2018_Set1_Test1_4');
-    case 5,  handles=psha_updatemodel(handles,'PEER2018_Set1_Test1_5');
-    case 6,  handles=psha_updatemodel(handles,'PEER2018_Set1_Test1_6');
-    case 7,  handles=psha_updatemodel(handles,'PEER2018_Set1_Test1_7');
-    case 8,  handles=psha_updatemodel(handles,'PEER2018_Set1_Test1_8a');
-    case 9,  handles=psha_updatemodel(handles,'PEER2018_Set1_Test1_8b');
-    case 10, handles=psha_updatemodel(handles,'PEER2018_Set1_Test1_8c');
-    case 11, handles=psha_updatemodel(handles,'PEER2018_Set1_Test1_10');
-    case 12, handles=psha_updatemodel(handles,'PEER2018_Set1_Test1_11');
-    case 13, handles=psha_updatemodel(handles,'PEER2018_Set2_Test2_1');
-    case 14, handles=psha_updatemodel(handles,'PEER2018_Set2_Test2_2a');
-    case 15, handles=psha_updatemodel(handles,'PEER2018_Set2_Test2_2b');
-    case 16, handles=psha_updatemodel(handles,'PEER2018_Set2_Test2_2c');
-    case 17, handles=psha_updatemodel(handles,'PEER2018_Set2_Test2_2d');
-    case 18, handles=psha_updatemodel(handles,'PEER2018_Set2_Test2_3a');
-    case 19, handles=psha_updatemodel(handles,'PEER2018_Set2_Test2_3b');
-    case 20, handles=psha_updatemodel(handles,'PEER2018_Set2_Test2_3c');
-    case 21, handles=psha_updatemodel(handles,'PEER2018_Set2_Test2_3d');
+    case 1,  [handles.sys,handles.opt,handles.h]=psha_updatemodel('PEER2018_Set1_Test1_1');
+    case 2,  [handles.sys,handles.opt,handles.h]=psha_updatemodel('PEER2018_Set1_Test1_2');
+    case 3,  [handles.sys,handles.opt,handles.h]=psha_updatemodel('PEER2018_Set1_Test1_3');
+    case 4,  [handles.sys,handles.opt,handles.h]=psha_updatemodel('PEER2018_Set1_Test1_4');
+    case 5,  [handles.sys,handles.opt,handles.h]=psha_updatemodel('PEER2018_Set1_Test1_5');
+    case 6,  [handles.sys,handles.opt,handles.h]=psha_updatemodel('PEER2018_Set1_Test1_6');
+    case 7,  [handles.sys,handles.opt,handles.h]=psha_updatemodel('PEER2018_Set1_Test1_7');
+    case 8,  [handles.sys,handles.opt,handles.h]=psha_updatemodel('PEER2018_Set1_Test1_8a');
+    case 9,  [handles.sys,handles.opt,handles.h]=psha_updatemodel('PEER2018_Set1_Test1_8b');
+    case 10, [handles.sys,handles.opt,handles.h]=psha_updatemodel('PEER2018_Set1_Test1_8c');
+    case 11, [handles.sys,handles.opt,handles.h]=psha_updatemodel('PEER2018_Set1_Test1_10');
+    case 12, [handles.sys,handles.opt,handles.h]=psha_updatemodel('PEER2018_Set1_Test1_11');
+    case 13, [handles.sys,handles.opt,handles.h]=psha_updatemodel('PEER2018_Set2_Test2_1');
+    case 14, [handles.sys,handles.opt,handles.h]=psha_updatemodel('PEER2018_Set2_Test2_2a');
+    case 15, [handles.sys,handles.opt,handles.h]=psha_updatemodel('PEER2018_Set2_Test2_2b');
+    case 16, [handles.sys,handles.opt,handles.h]=psha_updatemodel('PEER2018_Set2_Test2_2c');
+    case 17, [handles.sys,handles.opt,handles.h]=psha_updatemodel('PEER2018_Set2_Test2_2d');
+    case 18, [handles.sys,handles.opt,handles.h]=psha_updatemodel('PEER2018_Set2_Test2_3a');
+    case 19, [handles.sys,handles.opt,handles.h]=psha_updatemodel('PEER2018_Set2_Test2_3b');
+    case 20, [handles.sys,handles.opt,handles.h]=psha_updatemodel('PEER2018_Set2_Test2_3c');
+    case 21, [handles.sys,handles.opt,handles.h]=psha_updatemodel('PEER2018_Set2_Test2_3d');
 end
+house_keeping1
+plot_sites_PSHA
 handles.pdffile = handles.sys.filename;
-plot_sites_PSHA(handles);
-
-if isfield(handles.sys,'lambdaTest')
-    plot(handles.ax2,handles.sys.IM,handles.sys.lambdaTest(1,:),'ko','tag','lambdaTest');
-    Leg=legend(handles.ax2,'Benchmark');
-    ch  = findall(handles.FIGSeismicHazard,'tag','hazardlegend');
-    Leg.Visible='on';
-    Leg.FontSize=8;
-    Leg.EdgeColor=[1 1 1];
-    Leg.Location='SouthWest';
-    Leg.Tag='hazardlegend';
-    handles.ax2.XScale='linear';
-    handles.ax2.YScale='log';
-end
 guidata(hObject,handles)
 
 function LoadCustom_Callback(hObject, eventdata, handles)
@@ -209,38 +171,40 @@ else
 end
 
 if FILTERINDEX==0,return;end
-handles=psha_updatemodel(handles,[],[pathname,filename]);
-plot_sites_PSHA(handles);
+initializePSHA;
+[handles.sys,handles.opt,handles.h]=psha_updatemodel([],[pathname,filename]);
+house_keeping1
+plot_sites_PSHA
 handles.defaultpath_others=pathname;
-
-if isfield(handles.sys,'lambdaTest')
-    plot(handles.ax2,handles.sys.IM,handles.sys.lambdaTest(1,:),'ko','tag','lambdaTest');
-end
 guidata(hObject, handles);
 
-function Export_Results_Callback(hObject, eventdata, handles)
+function Export_Results_Callback(~,~,~)
 
 function ExportHazard_Callback(hObject, eventdata, handles)
 [FileName,PathName,FILTERINDEX] =  uiputfile('*.out','Save Hazard Analysis As');
 if FILTERINDEX==0
     return
 end
-haz2txt(FileName,PathName,handles)
+WEIGHT = handles.sys.weight(:,5);
+haz2txt(FileName,PathName,WEIGHT,handles.MRE,handles.opt,handles.h)
 
-function ExportIS_Callback(hObject, eventdata, handles)
-
-[FileName,PathName,FILTERINDEX] =  uiputfile('*.bin','Save Hazard Analysis As');
+function ExportIS_Callback(~, ~, handles) %#ok<*INUSD>
+[FileName,PathName,FILTERINDEX] =  uiputfile('*.bin','Save Hazard Analysis As'); %#ok<*ASGLU>
+FILE = fullfile(PathName,FileName);
 if FILTERINDEX==0
     return
 end
-dsha_bin(FileName,PathName,handles,'IS'); % new function
+etype='IS';
+dsha_bin
 
 function ExportKM_Callback(hObject, eventdata, handles)
 [FileName,PathName,FILTERINDEX] =  uiputfile('*.bin','Save Hazard Analysis As');
+FILE = fullfile(PathName,FileName);
 if FILTERINDEX==0
     return
 end
-dsha_bin(FileName,PathName,handles,'KM'); % new function
+etype='KM';
+dsha_bin
 
 function ExportGE_Image_Callback(hObject, eventdata, handles)
 
@@ -263,7 +227,7 @@ else
     warndlg('No Background Image Found')
 end
 
-function Undockax_Callback(hObject, eventdata, handles)
+function Undockax_Callback(~,~,~)
 
 function ExportHazardCurves_Callback(hObject, eventdata, handles)
 figure2clipboard_uimenu(hObject, eventdata,handles.ax2)
@@ -271,16 +235,16 @@ figure2clipboard_uimenu(hObject, eventdata,handles.ax2)
 function ExportMap_Callback(hObject, eventdata, handles)
 figure2clipboard_uimenu(hObject, eventdata,handles.ax1)
 
-function Exit_Callback(hObject, eventdata, handles)
+function Exit_Callback(~,~,~)
 close(gcf)
 
-function Exit_button_Callback(hObject, eventdata, handles)
-close(handles.FIGSeismicHazard)
+function Exit_button_Callback(hObject, eventdata,~)
+close(gcf)
 
 % ------EDIT MENU --------------------------------------------------------
-function Edit_Callback(hObject, eventdata, handles)
+function Edit_Callback(~, ~, ~)
 
-function Update_Global_Parameters_Callback(hObject, eventdata, handles)
+function Update_Global_Parameters_Callback(hObject, ~, handles)
 
 old_opt     = handles.opt;
 switch handles.sys.filename
@@ -289,16 +253,19 @@ switch handles.sys.filename
         handles.opt = new_opt;
         handles.IM_select.String=handles.opt.IM;
         if ~structcmp(new_opt,old_opt)
-            handles = delete_analysis_PSHA(handles);
+            delete_analysis_PSHA;
         end
     otherwise
         new_opt = GlobalParam(handles.opt);
+        
+        if strcmp(new_opt.SourceDeagg,'off')
+            handles.HazOptions.sbh(2:3)=0;
+        end
+        A=unique(handles.sys.gmmptr(:));
         Tmax = [];
-        for i=1:length(handles.model)
-            for j=1:length(handles.model(i).source)
-                T    = handles.model(i).source(j).gmpe.T;
-                Tmax = [Tmax;max(T)]; %#ok<AGROW>
-            end
+        for i=1:length(A)
+            T    = handles.sys.gmmlib(A(i)).T;
+            Tmax = [Tmax;max(T)]; %#ok<AGROW>
         end
         Tmax      = min(Tmax);
         Tdeleted  = new_opt.IM(new_opt.IM>Tmax);
@@ -313,23 +280,28 @@ switch handles.sys.filename
         handles.opt  = new_opt;
         handles.IM_select.Value  = 1;
         handles.IM_select.String = IM2str(handles.opt.IM);
+        handles.pop_field.Value  = 1;
+        handles.pop_field.String = IM2str([handles.opt.IM1;handles.opt.IM2(:)]);
+        
         if ~structcmp(new_opt,old_opt)
-            handles = delete_analysis_PSHA(handles);
+            delete_analysis_PSHA;
         end
         if strcmp(handles.opt.Clusters{1},'on')
             handles.po_clusters.Enable='on';
+            [handles.idx,handles.hc] = compute_clusters(handles.opt,handles.h);
         else
+            handles.idx=[];
+            handles.hc=createObj('site');
             handles.po_clusters.Enable='off';
         end
+        plot_sites_PSHA
+        default_maps(handles.fig,handles.opt);
 end
-[handles.idx,handles.hc] = compute_clusters(handles);
-plot_sites_PSHA(handles);
-default_maps(handles,handles.ax1);
 guidata(hObject, handles);
 
 function LogicTree_Callback(hObject, eventdata, handles)
-if ~isfield(handles,'sys'), return;end
-handles.sys=PSHA_Logic_Tree(handles.sys);
+if ~~isempty(handles.sys), return;end
+handles.sys.branch=PSHA_Logic_Tree(handles.sys.branch,handles.sys.weight,handles.sys.gmmid);
 guidata(hObject,handles)
 
 function SourceGeometry_Callback(hObject, eventdata, handles)
@@ -337,37 +309,49 @@ SourceGeometry(handles);
 guidata(hObject, handles);
 
 function MagnitudeRecurrence_Callback(hObject, eventdata, handles)
-MR_explorer(handles)
+MR_explorer(...
+    handles.sys.mrr1,...
+    handles.sys.mrr2,...
+    handles.sys.mrr3,...
+    handles.sys.mrr4,...
+    handles.sys.mrr5,...
+    handles.sys.Nmrr,...
+    handles.opt)
 
 function Seismicity_Callback(hObject, eventdata, handles)
 GMM_explorer(handles)
 
 function Sites_Callback(hObject, eventdata, handles)
 
-handin.h           = handles.h;
-handin.ax          = handles.ax1;
-handin.opt         = handles.opt;
-handin.Vs30        = handles.sys.VS30;
-[h_new,Vs30,index] = SelectLocations(handin);
-equalh             = structcmp(handin.h,h_new);
+handin.h            = handles.h;
+handin.ax           = handles.ax1;
+handin.opt          = handles.opt;
+handin.layer        = handles.sys.layer;
+[h_new,layer,index] = SelectLocations(handin);
+equalh              = structcmp(handin.h,h_new);
+
+switch handles.opt.Clusters{1}
+    case 'on' , [handles.idx,handles.hc] = compute_clusters(handles.opt,handles.h);
+    case 'off'
+        handles.idx=[];
+        handles.hc =createObj('site');
+end
 
 if equalh
     return
 end
 
-handles = delete_analysis_PSHA(handles);
+delete_analysis_PSHA;
 handles.site_selection = 1:length(h_new.id);
 Nsites = size(h_new.p,1);
-handles.site_colors = repmat([0 0 1],Nsites,1);
-handles.h                = h_new;
-handles.sys.VS30         = Vs30;
-handles.index            = index;
+handles.h = h_new;
+handles.sys.layer = layer;
+handles.index = index;
 handles.site_menu.String = handles.h.id;
 handles.site_menu.Value  = 1;
 handles.site_menu_psda.String = handles.h.id;
 handles.site_menu_psda.Value  = 1;
-[handles.idx,handles.hc] = compute_clusters(handles);
-plot_sites_PSHA(handles);
+plot_sites_PSHA
 
 guidata(hObject, handles);
 
@@ -382,36 +366,35 @@ handles.GoogleEarthOpt=GEOptions(handles.GoogleEarthOpt);
 guidata(hObject, handles);
 
 % -----TOOLS MENU --------------------------------------------------------
-function SeismicHazardTools_Callback(hObject, eventdata, handles)
+function SeismicHazardTools_Callback(~,~,~)
 
 function launch_UHS_Callback(hObject, eventdata, handles)
-if ~isempty(handles.isREGULAR)
-    UHS(handles.sys,handles.model,handles.opt,handles.h)
+if ~isempty(handles.sys) && ~isempty(handles.sys.isREG)
+    UHS(handles.sys,handles.opt,handles.h)
 end
 
 function launch_CMS_Callback(hObject, eventdata, handles)
-if ~isempty(handles.isREGULAR)
+if ~isempty(handles.sys) && ~isempty(handles.sys.isREG)
     CMS(handles.sys,handles.opt,handles.h)
 end
 
 function launch_CSS_Callback(hObject, eventdata, handles)
-
-if ~isempty(handles.isREGULAR)
+if ~isempty(handles.sys) && ~isempty(handles.sys.isREG)
     CSS(handles.sys,handles.opt,handles.h)
 end
 
 function launch_CSSIa_Callback(hObject, eventdata, handles)
-if ~isempty(handles.isREGULAR)
-%     CSSAI(handles.sys,handles.opt,handles.h)
+if ~isempty(handles.sys) && ~isempty(handles.sys.isREG)
+    %     CSSAI(handles.sys,handles.opt,handles.h)
 end
 
 function launch_DEAGG_MR_Callback(hObject, eventdata, handles)
 switch handles.sys.filename
     case {'USGS_NHSM_2008','USGS_NHSM_2014'}
-        % DeaggregationUSGS(handles);
+        % DeaggregationUSGS(handles); % UNDER MAINTENANCE
     otherwise
-        if ~isempty(handles.isREGULAR)
-            DeaggregationMR(handles.sys,handles.model,handles.opt,handles.h);
+        if ~isempty(handles.sys) && ~isempty(handles.sys.isREG)
+            DeaggregationMR(handles.sys,handles.opt,handles.h);
         end
 end
 guidata(hObject,handles)
@@ -420,34 +403,28 @@ function launch_DEAGG_MRe_Callback(hObject, eventdata, handles)
 switch handles.sys.filename
     case {'USGS_NHSM_2008','USGS_NHSM_2014'} % not available
     otherwise
-        if ~isempty(handles.isREGULAR)
-            DeaggregationMRe(handles.sys,handles.model,handles.opt,handles.h);
+        if ~isempty(handles.sys) && ~isempty(handles.sys.isREG)
+            DeaggregationMRe(handles.sys,handles.opt,handles.h);
         end
 end
 guidata(hObject,handles)
 
 function launch_PSDA_Callback(hObject, eventdata, handles)
-PSDA2(handles.sys,handles.model,handles.opt,handles.h)
+PSDA2(handles.sys,handles.opt,handles.h)
 
 function launch_PVSHA_Callback(hObject, eventdata, handles)
-if ~isempty(handles.isREGULAR)
-    VPSHA(handles.sys,handles.model,handles.opt,handles.h)
+if ~isempty(handles.sys) && ~isempty(handles.sys.isREG)
+    VPSHA(handles.sys,handles.opt,handles.h)
 end
 
-function launch_CGMM_Callback(hObject, eventdata, handles)
-if ~isempty(handles.isPCE)
-    CGMM(handles.sys,handles.model,handles.opt,handles.h,handles.HazOptions,handles.isPCE)
+function launch_PCE_Callback(hObject, eventdata, handles)
+if ~isempty(handles.sys.isPCE)
+    CGMM(handles.sys,handles.opt,handles.h,handles.HazOptions)
 end
 
 function launch_GRD_Callback(hObject, eventdata, handles)
-if ~isempty(handles.isREGULAR)
-    handin.sys    = handles.sys;
-    handin.opt    = handles.opt;
-    handin.h      = handles.h;
-    handin.model  = handles.model;
-    handin.GoogleEarthOpt  = handles.GoogleEarthOpt;
-    handin.ax     = handles.ax1;
-    GRD(handin)
+if ~isempty(handles.sys) && ~isempty(handles.sys.isREG)
+    GRD(handles.sys,handles.opt,handles.h,handles.ax1)
 end
 
 % -----PSHA MENU --------------------------------------------------------
@@ -455,130 +432,181 @@ function PSHAsetup_Callback(hObject, eventdata, handles)
 handles.site_selection=PSHARunOptions(handles);
 guidata(hObject,handles)
 
-function PSHAMenu_Callback(hObject, eventdata, handles)
+function PSHAMenu_Callback(~,~,~)
 
 function site_menu_Callback(hObject, eventdata, handles)
-plot_hazard_PSHA(handles);
-plot_hazardmap_PSHA(handles);
+plot_hazard_PSHA(...
+    handles.fig,...
+    handles.HazOptions,...
+    handles.opt,...
+    handles.sys.isPCE,...
+    handles.MRE,...
+    handles.MREPCE,...
+    handles.sys.validation,...
+    handles.sys.weight(:,5),...
+    handles.sys.labelG,...
+    handles.sys.mech,...
+    handles.idx,1);
+
 guidata(hObject, handles);
 
 function IM_select_Callback(hObject, eventdata, handles)
-plot_hazard_PSHA(handles);
-plot_hazardmap_PSHA(handles);
+plot_hazard_PSHA(...
+    handles.fig,...
+    handles.HazOptions,...
+    handles.opt,...
+    handles.sys.isPCE,...
+    handles.MRE,...
+    handles.MREPCE,...
+    handles.sys.validation,...
+    handles.sys.weight(:,5),...
+    handles.sys.labelG,...
+    handles.sys.mech,...
+    handles.idx);
+
+IM_ptr = handles.IM_select.Value;
+if ismember(handles.HazOptions.sbh(1),handles.sys.isREG)
+    handles.site_colors = compute_v(...
+        handles.fig,...
+        handles.opt,...
+        handles.HazOptions,...
+        nansum(handles.MRE(:,:,IM_ptr,:,:),4),...
+        handles.sys.weight(:,5));
+    plot_hazardmap_PSHA(...
+        handles.fig,...
+        handles.site_colors,...
+        handles.HazOptions,...
+        handles.h,...
+        handles.idx);
+end
 guidata(hObject, handles);
 
 function runMRE_Callback(hObject, eventdata, handles)
 
 opt    = handles.opt;
-slist  = handles.site_selection;
-idx    = handles.idx;
-slistc = 1:length(unique(idx));
-str    = sprintf('%s%s',opt.LiteMode,opt.Clusters{1});
+slist1 = handles.site_selection;
+slist2 = 1:max(handles.idx);
 
 switch handles.sys.filename
-   case 'USGS_NHSM_2008', handles=runhazUSGS(handles);
-   case 'USGS_NHSM_2014', handles=runhazUSGS(handles);
-   otherwise
-       switch str
-           case 'onoff'  , [handles.MRE,handles.MREPCE] = runlogictree0(handles.sys,handles.model,opt,handles.h ,slist);
-           case 'onon'   , [handles.MRE,handles.MREPCE] = runlogictree0(handles.sys,handles.model,opt,handles.hc,idx);
-           case 'offoff' , [handles.MRE,handles.MREPCE] = runlogictree1(handles.sys,handles.model,opt,handles.h ,slist);
-           case 'offon'  , [handles.MRE,handles.MREPCE] = runlogictree1(handles.sys,handles.model,opt,handles.hc,slistc,idx);
-       end
-
-       handles.site_menu.Value  = handles.site_selection(1);
-       plot_hazard_PSHA(handles);
-       handles.site_colors = compute_v(handles);
-       plot_hazardmap_PSHA(handles);
+    case 'USGS_NHSM_2008', handles=runhazUSGS(handles);
+    case 'USGS_NHSM_2014', handles=runhazUSGS(handles);
+    otherwise
+        switch handles.opt.Clusters{1}
+            case 'off', [handles.MRE,handles.MREPCE] = runlogictree1(handles.sys,opt,handles.h ,slist1);
+            case 'on' , [handles.MRE,handles.MREPCE] = runlogictree1(handles.sys,opt,handles.hc,slist2);
+        end
+        
+        handles.site_menu.Value      = handles.site_selection(1);
+        plot_hazard_PSHA(...
+            handles.fig,...
+            handles.HazOptions,...
+            handles.opt,...
+            handles.sys.isPCE,...
+            handles.MRE,...
+            handles.MREPCE,...
+            handles.sys.validation,...
+            handles.sys.weight(:,5),...
+            handles.sys.labelG,...
+            handles.sys.mech,...
+            handles.idx);
+        
+        IM_ptr = handles.IM_select.Value;
+        handles.site_colors = compute_v(...
+            handles.fig,...
+            handles.opt,...
+            handles.HazOptions,...
+            nansum(handles.MRE(:,:,IM_ptr,:,:),4),...
+            handles.sys.weight(:,5));
+        plot_hazardmap_PSHA(...
+            handles.fig,...
+            handles.site_colors,...
+            handles.HazOptions,...
+            handles.h,...
+            handles.idx);
 end
 handles.platformMode = 1;
 handles.PSHApannel.Visible='on';
 handles.DSHApannel.Visible='off';
-handles.switchmode.Enable=enableswitchmode(handles);
+handles.switchmode.Enable=enableswitchmode(~isempty(handles.MRE),~isempty(handles.scenarios));
 handles.switchmode.CData=handles.form1;
 handles.switchmode.TooltipString='switch to PSDA mode';
 handles.ax2.XScale='log';
 handles.ax2.YScale='log';
 
-if ispc && isfield(handles.sys,'lambdaTest')
-   comparePEER(handles)
-   handles.ax2.XScale='linear';
-   handles.ax2.YScale='log';    
+if ispc && isfield(handles.sys,'validation') && ~isempty(handles.sys.validation)
+    comparePEER(handles.sys.validation,handles.MRE,opt.im,handles.sys.filename)
+end
+
+if ispc
+    pdffile = strrep(handles.sys.filename,'.txt','.pdf');
+    if exist(pdffile,'file')
+        handles.pdffile = pdffile;
+        handles.OpenRef.Visible='on';
+    else
+        handles.OpenRef.Visible='off';
+    end
 end
 
 guidata(hObject, handles);
 
 % ---------------- DSHAMENU MENU----------------------------
-function DSHAMenu_Callback(hObject, eventdata, handles)
+function DSHAMenu_Callback(~,~,~)
 
 function CreateScenarios_Callback(hObject, eventdata, handles)
-A = handles.scenarios;
-[handles.scenarios,handles.tessel,handles.ptrs,handles.ScenOptions] = ...
-    ScenarioBuilder(handles.sys,handles.model,handles.opt,A,handles.tessel,handles.ScenOptions);
-handles.pop_scenario.Value = 1;
-guidata(hObject,handles)
 
-if ~isequal(handles.scenarios,A)
-    if isfield(handles,'shakefield')
-        handles.shakefield=[];
-        handles.DSHApannel.Visible='off';
-        delete(findall(handles.ax2,'type','line'));
-        delete(findall(handles.FIGSeismicHazard,'type','legend'))
-    end
-end
-
-Ns   = length(handles.scenarios);
-per  = [handles.opt.IM1;handles.opt.IM2];
-
-handles.pop_scenario.String  = compose('scen %i-%i',handles.ptrs);
-handles.pop_field.String     = IM2str(per);
-
-if Ns>=1
-    handles.Run_DHSA_IS.Enable='on';
-    handles.Run_DSHA_KM.Enable='on';
-end
+[handles.scenarios,handles.source] = ScenarioBuilder2(handles.sys,handles.opt,handles.h,handles.scenarios,handles.source);
+Ns = size(handles.scenarios,1);
+handles.pop_scenario.Value   = 1;
+handles.pop_scenario.String  = compose('S%i',1:Ns);
+handles.pop_field.String     = IM2str([handles.opt.IM1(:);handles.opt.IM2(:)]);
 guidata(hObject,handles)
 
 function Run_DHSA_IS_Callback(hObject, eventdata, handles)
 
+if isempty(handles.source) || isempty(handles.scenarios)
+    handles.source    = buildDSHAmodel2(handles.sys,handles.opt,handles.h);
+    handles.scenarios = sSCEN_list(handles.source);
+    Ns = size(handles.scenarios,1);
+    handles.pop_scenario.Value   = 1;
+    handles.pop_scenario.String  = compose('S%i',1:Ns);
+    handles.pop_field.String     = IM2str([handles.opt.IM1(:);handles.opt.IM2(:)]);
+end
+
 handles.pop_scenario.Value = 1;
-handles    = dsha_assembler2(handles);
-plot_scenario_PSDA2(handles);
+[handles.mulogIM,handles.L] = run_DSHA(handles.source,handles.scenarios,handles.h,handles.opt);
+plot_DSHA
+
 handles.platformMode = 2;
 handles.PSHApannel.Visible='off';
 handles.DSHApannel.Visible='on';
-handles.switchmode.Enable=enableswitchmode(handles);
+handles.switchmode.Enable=enableswitchmode(~isempty(handles.MRE),~isempty(handles.scenarios));
 handles.switchmode.CData=handles.form2;
 handles.switchmode.TooltipString='switch to PSHA mode';
-dsha_lambda2(handles,1);
+dsha_lambda2(handles);
 
 guidata(hObject,handles)
 
 function Run_DSHA_KM_Callback(hObject, eventdata, handles)
-answer = inputdlg({'Number of Clusters:','Replicate'},'k-means',[1,35],{'100','5'});
+answer = inputdlg({'Number of Clusters:','Replicate'},'k-means',[1,35],{'200','1'});
 if isempty(answer)
     return
 end
 handles.optkm = str2double(answer);
 [handles.krate,handles.kY] = dsha_kmeans(handles,handles.optkm);
-dsha_lambda2(handles,1);
+dsha_lambda2(handles);
 guidata(hObject,handles)
 
 function pop_scenario_Callback(hObject, eventdata, handles)
-plot_scenario_PSDA2(handles);
-handles.Zscenario=1;
-guidata(hObject,handles)
+plot_DSHA
 
 function pop_field_Callback(hObject, eventdata, handles)
-plot_scenario_PSDA2(handles);
-handles.Zscenario=1;
-dsha_lambda2(handles,1);
+plot_DSHA
+dsha_lambda2(handles);
 guidata(hObject,handles)
 
 function RefreshButton_Callback(hObject, eventdata, handles)
-
-plot_scenario_PSDA2(handles);
-dsha_lambda2(handles,1);
+plot_DSHA
+dsha_lambda2(handles);
 guidata(hObject,handles)
 
 function show_RA_Callback(hObject, eventdata, handles)
@@ -590,11 +618,11 @@ end
 guidata(hObject,handles)
 
 function PSDA_display_mode_Callback(hObject, eventdata, handles)
-plot_scenario_PSDA2(handles);
+plot_DSHA
 guidata(hObject,handles)
 
 function NumSim_Callback(hObject, eventdata, handles)
-dsha_lambda2(handles,1);
+dsha_lambda2(handles);
 guidata(hObject,handles)
 
 function shakecorrmode_Callback(hObject, eventdata, handles)
@@ -605,9 +633,9 @@ switch hObject.Value
     case 3, opt2.Spatial=@none_spatial;
     case 4, opt2.Spatial=@none_spatial; opt2.Spectral=@none_spectral;
 end
-handles.L  = dsha_chol2(handles.shakefield,handles.hdist,opt2);
-plot_scenario_PSDA2(handles);
-dsha_lambda2(handles,1);
+[handles.mulogIM,handles.L] = run_DSHA(handles.source,handles.scenarios,handles.h,opt2);
+plot_DSHA
+dsha_lambda2(handles);
 guidata(hObject,handles)
 
 % -----DISPLAY OPTIONS ------------------------------------------------------
@@ -631,69 +659,48 @@ guidata(hObject,handles);
 
 function po_sources_Callback(hObject, eventdata, handles)
 i   = handles.po_region.Value;
+tag_edge = sprintf('edge%g',handles.po_region.Value);
+tag_mesh = sprintf('mesh%g',handles.po_region.Value);
 switch hObject.Value
     case 1
-        handles.points(i).Visible='on';
-        handles.lines(i).Visible='on';
-        handles.areas(i).Visible='on';
-        
+        ch=findall(handles.ax1,'tag',tag_edge); set(ch,'visible','on');
     case 0
-        handles.points(i).Visible='off';
-        handles.lines(i).Visible='off';
-        handles.areas(i).Visible='off';
-        handles.linemesh(i).Visible='off';
-        handles.areamesh(i).Visible='off';
+        ch=findall(handles.ax1,'tag',tag_edge); set(ch,'visible','off');
+        ch=findall(handles.ax1,'tag',tag_mesh); set(ch,'visible','off');
         handles.po_sourcemesh.Value=0;
 end
 guidata(hObject,handles);
 
 function po_sourcemesh_Callback(hObject, eventdata, handles)
 i   = handles.po_region.Value;
+tag_mesh = sprintf('mesh%g',handles.po_region.Value);
 switch hObject.Value
     case 1
-        set(handles.linemesh(i),'visible','on');
-        set(handles.areamesh(i),'visible','on');
+        ch=findall(handles.ax1,'tag',tag_mesh); set(ch,'visible','on');
     case 0
-        set(handles.linemesh(i),'visible','off');
-        set(handles.areamesh(i),'visible','off');
-        
+        ch=findall(handles.ax1,'tag',tag_mesh); set(ch,'visible','off');
 end
 guidata(hObject,handles);
 
 function po_sites_Callback(hObject, eventdata, handles)
 ch=findall(handles.ax1,'tag','siteplot');
+switch hObject.Value
+    case 1, set(ch,'visible','on');
+    case 0, set(ch,'visible','off');
+end
+guidata(hObject,handles);
 
+function po_clusters_Callback(hObject, eventdata, handles)
+ch=findall(handles.ax1,'tag','cluster');
 switch hObject.Value
     case 1, set(ch,'visible','on');
     case 0, set(ch,'visible','off');
 end
 
-v = handles.po_sites.Value+handles.po_contours.Value;
-ch = findall(handles.FIGSeismicHazard,'type','ColorBar');
-if ~isempty(ch)
-    switch v
-        case 0    ,ch.Visible='off';
-        otherwise ,ch.Visible='on';
-    end
-end
-
-guidata(hObject,handles);
-
-function po_clusters_Callback(hObject, eventdata, handles)
-ch = findall(handles.ax1,'tag','siteplot');
-
-switch hObject.Value
-    case 0
-        Nsites   = size(handles.h.p,1);
-        ch.CData = handles.site_colors;
-    case 1
-        Nunique = length(unique(handles.idx));
-        c = hsv(Nunique);
-        ch.CData = c(handles.idx,:);
-end
-
 function po_contours_Callback(hObject, eventdata, handles)
-
+if isempty(handles.MRE) && isempty(handles.scenarios)
+    return
+end
 switch handles.po_contours.Value
     case 0
         for i=1:size(handles.h.t,1)
@@ -715,7 +722,7 @@ switch handles.po_contours.Value
         end
 end
 v = handles.po_sites.Value+handles.po_contours.Value;
-ch = findall(handles.FIGSeismicHazard,'type','ColorBar');
+ch = findall(handles.fig,'type','ColorBar');
 if ~isempty(ch)
     switch v
         case 0    ,ch.Visible='off';
@@ -725,41 +732,36 @@ end
 guidata(hObject, handles);
 
 function po_region_Callback(hObject, eventdata, handles)
-i = hObject.Value; %change in geometry selection
-set(handles.points,'visible','off');
-set(handles.lines,'visible','off');
-set(handles.areas,'visible','off');
-set(handles.areamesh,'visible','off');
-set(handles.linemesh,'visible','off');
 
-Nmodels = length(hObject.String);
-for j=1:Nmodels
-    set(handles.TT{j},'Visible','off');
+ngeom = length(hObject.String);
+for i=1:ngeom
+    tag=sprintf('edge%g',i);ch=findall(handles.ax1,'tag',tag);set(ch,'Visible','off');
+    tag=sprintf('mesh%g',i);ch=findall(handles.ax1,'tag',tag);set(ch,'Visible','off');
 end
 
-switch handles.po_sources.Value
-    case 1
-        handles.points(i).Visible='on';
-        handles.lines(i).Visible='on';
-        handles.areas(i).Visible='on';
-    case 0
-        handles.points(i).Visible='off';
-        handles.areas(i).Visible='off';
-        handles.areas(i).Visible='off';
+
+for j=1:ngeom
+    tag=sprintf('sourcetag%g',j);
+    ch = findall(handles.ax1,'tag',tag);
+    set(ch,'Visible','off');
 end
 
-switch handles.po_sourcemesh.Value
-    case 1
-        handles.areamesh(i).Visible='on';
-        handles.linesmesh(i).Visible='on';
-    case 0
-        handles.areamesh(i).Visible='off';
-        handles.linesmesh(i).Visible='off';
+if handles.po_sources.Value
+    tag=sprintf('edge%g',hObject.Value);
+    ch=findall(handles.ax1,'tag',tag);
+    set(ch,'Visible','on');
 end
 
-switch handles.SourceLabels.Value
-    case 1, set(handles.TT{i},'Visible','on');
-    case 0, set(handles.TT{i},'Visible','off');
+if handles.po_sourcemesh.Value
+    tag=sprintf('mesh%g',hObject.Value);
+    ch=findall(handles.ax1,'tag',tag);
+    set(ch,'Visible','on');
+end
+
+if handles.SourceLabels.Value
+    tag=sprintf('sourcetag%g',hObject.Value);
+    ch = findall(handles.ax1,'tag',tag);
+    set(ch,'Visible','on');
 end
 
 function po_googleearth_Callback(hObject, eventdata, handles)
@@ -820,21 +822,12 @@ end
 guidata(hObject,handles)
 
 % ---------CUSTOM TOOLS----------------------------------------------------
-function Layers_check_Callback(hObject, eventdata, handles)
-ch = findall(handles.ax1,'tag','shape2');
-val = hObject.Value;
-switch val
-    case 1, set(ch,'visible','on');
-    case 0, set(ch,'visible','off')
-end
-guidata(hObject,handles);
-
 function Distance_button_Callback(hObject, eventdata, handles)
 ch1=findall(handles.ax1,'tag','patchselect');
 ch2=findall(handles.ax1,'tag','patchtxt');
 if isempty(ch1) && isempty(ch2)
-    ch1=findall(handles.FIGSeismicHazard,'Style','pushbutton','Enable','on'); set(ch1,'Enable','inactive');
-    ch2=findall(handles.FIGSeismicHazard,'type','uimenu','Enable','on'); set(ch2,'Enable','off');
+    ch1=findall(handles.fig,'Style','pushbutton','Enable','on'); set(ch1,'Enable','inactive');
+    ch2=findall(handles.fig,'type','uimenu','Enable','on'); set(ch2,'Enable','off');
     XYLIM1 = get(handles.ax1,{'xlim','ylim'});
     if handles.opt.ellipsoid.Code==0
         show_distanceECEF(handles.ax1,'line');
@@ -852,7 +845,7 @@ else
 end
 guidata(hObject, handles);
 
-function CreateAPI_Callback(hObject, eventdata, handles)
+function CreateAPI_Callback(~,~,~)
 
 prompt = {'Paste API key:'};
 title = 'API key';
@@ -875,23 +868,52 @@ end
 
 function engine_Callback(hObject, eventdata, handles)
 
-if ~isfield(handles,'model')
+if isempty(handles.MRE)
     return
 end
-str = [{handles.model.id};num2cell(horzcat(handles.model.isregular))];
-handles.HazOptions = HazardOptions(str,handles.HazOptions,handles.opt.LiteMode);
-plot_hazard_PSHA(handles);
+nmodels=size(handles.sys.branch,1);
+mtype  = false(1,nmodels);
+for i=1:length(handles.sys.isREG)
+    mtype(i)=ismember(handles.sys.isREG(i),1:nmodels);
+end
+str = [compose('Branch %i',1:nmodels);num2cell(mtype)];
+handles.HazOptions = HazardOptions(str,handles.HazOptions,handles.opt.SourceDeagg);
+
+plot_hazard_PSHA(...
+    handles.fig,...
+    handles.HazOptions,...
+    handles.opt,...
+    handles.sys.isPCE,...
+    handles.MRE,...
+    handles.MREPCE,...
+    handles.sys.validation,...
+    handles.sys.weight(:,5),...
+    handles.sys.labelG,...
+    handles.sys.mech,...
+    handles.idx);
+
+
 model_ptr = handles.HazOptions.sbh(1);
-if handles.model(model_ptr).isregular
-    % plots maps only for regular GMMs
-    handles.site_colors = compute_v(handles);
-    plot_hazardmap_PSHA(handles);
+if ismember(handles.HazOptions.sbh(1),handles.sys.isREG)
+    IM_ptr = handles.IM_select.Value;
+    handles.site_colors = compute_v(...
+        handles.fig,...
+        handles.opt,...
+        handles.HazOptions,...
+        nansum(handles.MRE(:,:,IM_ptr,:,:),4),...
+        handles.sys.weight(:,5));
+    plot_hazardmap_PSHA(...
+        handles.fig,...
+        handles.site_colors,...
+        handles.HazOptions,...
+        handles.h,...
+        handles.idx);
 end
 guidata(hObject,handles)
 
 function addLeg_Callback(hObject, eventdata, handles)
 
-ch = findall(handles.FIGSeismicHazard,'tag','hazardlegend');
+ch = findall(handles.fig,'tag','hazardlegend');
 if ~isempty(ch)
     switch ch.Visible
         case 'on',  ch.Visible='off';
@@ -901,7 +923,7 @@ end
 guidata(hObject,handles);
 
 function site_menu_psda_Callback(hObject, eventdata, handles)
-dsha_lambda2(handles,1);
+dsha_lambda2(handles);
 guidata(hObject,handles)
 
 function ax2Scale_Callback(hObject, eventdata, handles)
@@ -937,8 +959,9 @@ switch handles.platformMode
         handles.platformMode = 2;
         handles.PSHApannel.Visible='off';
         handles.DSHApannel.Visible='on';
-        dsha_lambda2(handles,1);
-        plot_scenario_PSDA2(handles);
+        dsha_lambda2(handles);
+        plot_DSHA
+        
         
     case 2
         handles.switchmode.CData=handles.form1;
@@ -946,12 +969,35 @@ switch handles.platformMode
         handles.platformMode=1;
         handles.PSHApannel.Visible='on';
         handles.DSHApannel.Visible='off';
-        plot_hazard_PSHA(handles);
-        plot_sites_PSHA(handles);
+        plot_hazard_PSHA(...
+            handles.fig,...
+            handles.HazOptions,...
+            handles.opt,...
+            handles.sys.isPCE,...
+            handles.MRE,...
+            handles.MREPCE,...
+            handles.sys.validation,...
+            handles.sys.weight(:,5),...
+            handles.sys.labelG,...
+            handles.sys.mech,...
+            handles.idx);
+        plot_sites_PSHA
         if ~isempty(handles.h.t)
             handles.po_contours.Enable='on';
             handles.po_contours.Value=1;
-            plot_hazardmap_PSHA(handles);
+            IM_ptr = handles.IM_select.Value;
+            handles.site_colors = compute_v(...
+                handles.fig,...
+                handles.opt,...
+                handles.HazOptions,...
+                nansum(handles.MRE(:,:,IM_ptr,:,:),4),...
+                handles.sys.weight(:,5));
+            plot_hazardmap_PSHA(...
+                handles.fig,...
+                handles.site_colors,...
+                handles.HazOptions,...
+                handles.h,...
+                handles.idx);
         end
         handles.ax2.XScale='log';
         handles.ax2.YScale='log';
@@ -961,12 +1007,14 @@ guidata(hObject,handles)
 function SourceLabels_Callback(hObject, eventdata, handles)
 
 val = handles.po_region.Value;
+tag = sprintf('sourcetag%g',val);
+ch  = findall(handles.ax1,'tag',tag);
 switch hObject.Value
-    case 0, set(handles.TT{val},'visible','off')
-    case 1, set(handles.TT{val},'visible','on')
+    case 0, set(ch,'visible','off')
+    case 1, set(ch,'visible','on')
 end
 
-function Help_Callback(hObject, eventdata, handles)
+function Help_Callback(~,~,~)
 
 function QueryMem_Callback(hObject, eventdata, handles)
 
@@ -1003,7 +1051,7 @@ switch hObject.Checked
         handles.engine.Enable='on';
 end
 
-function About_Callback(hObject, eventdata, handles)
+function About_Callback(~,~,~)
 if ispc
     winopen('pshatoolbox_about.txt')
 end
@@ -1015,4 +1063,20 @@ end
 
 function ColorSecondaryLines_Callback(hObject, eventdata, handles)
 
-plot_hazard_PSHA(handles);
+plot_hazard_PSHA(...
+    handles.fig,...
+    handles.HazOptions,...
+    handles.opt,...
+    handles.sys.isPCE,...
+    handles.MRE,...
+    handles.MREPCE,...
+    handles.sys.validation,...
+    handles.sys.weight(:,5),...
+    handles.sys.labelG,...
+    handles.sys.mech,...
+    handles.idx);
+
+function restore_axis_Callback(hObject, eventdata, handles)
+
+handles.ax1.XLim=handles.ax1DefaultLimits(1,:);
+handles.ax1.YLim=handles.ax1DefaultLimits(2,:);

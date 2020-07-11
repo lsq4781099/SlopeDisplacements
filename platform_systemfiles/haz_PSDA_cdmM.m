@@ -3,31 +3,33 @@ handles.site_selection = 1:size(handles.h.p,1);
 opt = handles.opt;
 
 % finds what integration methods are declared in the logic tree
-Tcdm      = handles.tableCDM.Data(:,4:7);
-[imethod,usedM]=getmethod(handles,Tcdm);
+TCDM      = handles.tableCDM.Data(:,2:5);
+[imethod,usedM]=getmethod(handles,TCDM);
 haz=struct('imstandard',[],'IMstandard',[],'lambda',[],'deagg',[],'imvector',[],'IMvector',[],'corrlist',[],'MRD',[]);
 
 if any(ismember(imethod,6))
     handles.opt   = opt_update(handles,usedM,opt);
-    handles.model = handles.modelcdm;
-    Ncdms         = length(handles.model);
-    handles.sys.WEIGHT = ones(Ncdms,4);
+    branch        = regexp(handles.tableCDM.Data(:,2),'\,','split');
+    branch        = unique(str2double(vertcat(branch{:})),'rows');
+    nub           = size(branch,1);
+    handles.sys.branch = [branch,nan(nub,3),ones(nub,1)];
     haz.imstandard = handles.opt.im;
     haz.IMstandard = handles.opt.IM;
-    [haz.lambda,haz.deagg]=runlogictree2(handles);
+    [haz.lambda,haz.deagg]=runlogictree2(handles.sys,handles.opt,handles.h,handles.site_selection);
 end
 
 
-function[imethod,usedM]=getmethod(handles,T3)
+function[imethod,usedM]=getmethod(handles,TCDM)
 
-methods  = pshatoolbox_methods(5);
-s=vertcat(handles.modelcdm.source);s=s(:);
-mechs = unique({s.mechanism});
-mechs = strrep(mechs,'shallowcrustal','crustal');
-[~,B] = intersect({'interface','intraslab','crustal','grid'},mechs);
-func = {methods.str}';
+hazard  = regexp(TCDM(:,1),'\,','split');
+hazard  = str2double(vertcat(hazard{:}));
 
-Smodels = T3(:,B);
+ME      = handles.ME;
+geomptr = unique(hazard(:,1));
+s       = unique(vertcat(handles.sys.mech{geomptr}));
+[~,B]   = intersect([1;2;3],s);
+func    = {ME.str}';
+Smodels = TCDM(:,B+1);
 Smodels = unique(Smodels(:));
 usedM   = cell(size(Smodels));
 
@@ -39,20 +41,15 @@ end
 imethod = zeros(1,length(usedM));
 for i=1:length(imethod)
     [~,B]=intersect(func,usedM{i});
-    imethod(i)=methods(B).integrator;
+    imethod(i)=ME(B).integrator;
 end
-
+usedM  = unique(usedM);
 imethod = unique(imethod);
 
 function[opt]=opt_update(handles,usedM,opt)
-Nrow = size(handles.tableCDM.Data,1);
-T2=zeros(Nrow,1);
-for i=1:Nrow
-    aux = regexp(handles.tableCDM.Data{i,2},'\,','split');
-   T2(i)= str2double(aux{1});
-end
+[~,B]    = intersect(handles.h.param,'Ts');
+T2       = handles.h.value(:,B);
 methods  = pshatoolbox_methods(5);
-
 
 func = {methods.str}';
 [~,b]=intersect(func,usedM);

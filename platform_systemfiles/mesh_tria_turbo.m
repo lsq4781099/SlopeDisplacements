@@ -11,8 +11,8 @@ Np     = size(gps,1);
 isEVEN = ~mod(Np,2);
 
 if isEVEN
-    isUSD   = std(gps(1:Np/2,3))<1e6;
-    isLSD   = std(gps(Np/2+1:Np,3))<1e6;
+    isUSD   = std(gps(1:Np/2,3))<1e-6;
+    isLSD   = std(gps(Np/2+1:Np,3))<1e-6;
     isFAULT = max(abs(gps(1:Np/2,3)-gps(Np/2+1:Np,3)))>1e-3;
     
     % detects simplefaultgeometries (e.g., as defined in GEM sources)
@@ -26,6 +26,7 @@ if isEVEN
 else
     % detects complexfaultgeometries
     [xyz,conn0]=mesh_triaT(xyz0,1e10,0);
+    
 end
 
 Np = size(xyz,1);

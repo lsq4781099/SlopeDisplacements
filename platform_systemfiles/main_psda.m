@@ -9,6 +9,6 @@ JJ = JJ(:);
 KK = KK(:);
 w1 = cell2mat(T1(II,2));
 w2 = cell2mat(T2(JJ,4));
-w3 = cell2mat(T3(KK,6));
+w3 = cell2mat(T3(KK,5));
 T  = [T1(II,1),T2(JJ,1),T3(KK,1),num2cell(w1.*w2.*w3)];
 IJK = [II,JJ,KK];

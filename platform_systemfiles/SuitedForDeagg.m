@@ -1,6 +1,6 @@
 function dlist = SuitedForDeagg(handles)
 
-if isempty(handles.model)
+if isempty(handles.sys.isREG)
     dlist=[];
 else
     IJK       = handles.IJK;
@@ -8,9 +8,9 @@ else
     dlist     = 1:Nbranches;
     DD        = [];
     for i=1:Nbranches
-        stype  = unique({handles.model(IJK(i,1)).source.mechanism});
-        stype  = strrep(stype,'shallowcrustal','crustal');
-        [~,B]  = intersect({'interface','intraslab','crustal','grid'},stype);
+        geomptr = handles.sys.branch(IJK(i,1),1);
+        stype  = unique(handles.sys.mech{geomptr});
+        [~,B]  = intersect([1;2;3],stype);
         usedM  = handles.T3(IJK(i,3),B+1);
         [~,B ] = intersect({handles.sys.SMLIB.id},usedM);
         I      = unique(vertcat(handles.sys.SMLIB(B).integrator));

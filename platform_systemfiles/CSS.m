@@ -69,19 +69,24 @@ drawnow
 
 site_ptr   = handles.pop_site.Value;
 branch_ptr = handles.pop_branch.Value;
-site       = handles.h.p(site_ptr,:);
-Vs30       = handles.h.Vs30(site_ptr);
+
+h.id    = handles.h.id(site_ptr,:);
+h.p     = handles.h.p(site_ptr,:);
+h.param = handles.h.param;
+h.value = handles.h.value(site_ptr,:);
+
 Tcss       = handles.Tcss;
 NTcss      = length(Tcss);
 AEP        = handles.AEP;
-model      = handles.model(branch_ptr);
-Nsource    = length(model.source);
+branch     = handles.sys.branch(branch_ptr,:);
+sources    = buildmodelin(handles.sys,branch,handles.opt.ShearModulus);
+Nsource    = length(sources);
 im1        = repmat(logsp(0.01,3,10)',1,NTcss);
-lambda1    = runhazard1(im1,Tcss,site,Vs30,handles.opt,model,Nsource,1);
+lambda1    = runhazard1(im1,Tcss,h,handles.opt,sources,Nsource,1);
 lambda1    = permute(nansum(lambda1,4),[2 3 1]);
 im1        = ExtrapHazard(im1,lambda1,AEP);
 Nim        = size(im1,1);
-lambda1    = runhazard1(im1,Tcss,site,Vs30,handles.opt,model,Nsource,1);
+lambda1    = runhazard1(im1,Tcss,h,handles.opt,sources,Nsource,1);
 lambda1    = permute(nansum(lambda1,4),[2 3 1]);
 lambda2    = nan(Nim,NTcss);
 patch('parent',handles.ax1,'vertices',[im1([1 end end 1])',AEP([1 1 end end])],'faces',1:4,'edgecolor','none','facecolor',[1 0.97 0.97],'tag','patch','handlevisibility','off');
@@ -107,7 +112,7 @@ cols = repmat(cols,1,3);
 [uhs_spec,cms_spec,sigma_css,rho_css] = deal(zeros(NTcss,length(AEP)));
 for i=1:length(AEP)
     Tr             = 1/AEP(i);
-    data           = runCMS_m1_CSS(handles,im1,lambda1,Tr,model);
+    data           = runCMS_m1_CSS(handles,im1,lambda1,Tr,h,sources);
     uhs_spec(:,i)  = data(:,1);
     cms_spec(:,i)  = data(:,2);
     sigma_css(:,i) = data(:,3);
@@ -145,8 +150,8 @@ if handles.Npreselect==0
     return
 end
 
-if handles.Npreselect>950
-    warndlg('More than 950 ground motions candidates found; narrow search')
+if handles.Npreselect>990
+    warndlg('More than 990 ground motions candidates found; narrow search')
     return
 end
 
@@ -284,7 +289,7 @@ function ExportRecords_Callback(hObject, eventdata, handles)
 data =regexprep(handles.inCSS4,' +',' ');
 data=data(7:end);
 Nth = size(data,1);
-eq(1:Nth,1) = struct('Index',[],'HazLevel',[],'RSN',[],'EqID',[],'Mag',[],'Rrup',[],'Rjb',[],'Vs30',[],'Dur',[],'Scalefactor_h',[],'Scalefactor_v',[],'Rate',[],'Rate_Initial',[],'T',[],'SA',[],'AccFilename_H1',[],'AccFilename_H2',[],'AccFilename_V',[],'dt',[],'accH1',[],'accH2',[],'accV',[]);
+eq(1:Nth,1) = struct('Index',[],'HazLevel',[],'RSN',[],'EqID',[],'Mag',[],'Rrup',[],'Rjb',[],'VS30',[],'Dur',[],'Scalefactor_h',[],'Scalefactor_v',[],'Rate',[],'Rate_Initial',[],'T',[],'SA',[],'AccFilename_H1',[],'AccFilename_H2',[],'AccFilename_V',[],'dt',[],'accH1',[],'accH2',[],'accV',[]);
 for i=1:Nth
     line = regexp(strtrim(data{i}),'\ ','split');
     numline               = str2double(line(1:13));
@@ -295,7 +300,7 @@ for i=1:Nth
     eq(i).Mag             = numline(5);
     eq(i).Rrup            = numline(6);
     eq(i).Rjb             = numline(7);
-    eq(i).Vs30            = numline(8);
+    eq(i).VS30            = numline(8);
     eq(i).Dur             = numline(9);
     eq(i).Scalefactor_h   = numline(10);
     eq(i).Scalefactor_v   = numline(11);
@@ -315,7 +320,7 @@ if ischar(selpath)
     addpath(genpath(selpath));
     parfor i=1:Nth
         fprintf('%i\n',i)
-        [~       ,eq(i).accH1] = read_record(eq(i).AccFilename_H1);
+        [~       ,eq(i).accH1] = read_record(eq(i).AccFilename_H1); %#ok<*PFOUS>
         [eq(i).dt,eq(i).accH2] = read_record(eq(i).AccFilename_H2);
         eq(i).accH1 = eq(i).accH1 * eq(i).Scalefactor_h;
         eq(i).accH2 = eq(i).accH2 * eq(i).Scalefactor_h;
@@ -323,7 +328,8 @@ if ischar(selpath)
     path(pp);
 end
 % select file here (need to finish this)
-keyboard
+save cssGMselection eq
+msgbox(sprintf('Ground motions saved to %s ',fullfile(cd,'cssGMselection.mat')),'CSS','help');
 
 function File_Callback(hObject, eventdata, handles)
 

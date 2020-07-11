@@ -1,4 +1,12 @@
-function[im,lambdaIS] = dsha_lambda2(handles,~)
+function[im,lambdaIS] = dsha_lambda2(handles)
+
+pd = makedist('normal');
+sigma = handles.opt.Sigma;
+if ~isempty(sigma) && strcmpi(sigma{1},'truncate')
+    pd = truncate(pd,-inf,sigma{2});
+elseif ~isempty(sigma) && strcmpi(sigma{1},'overwrite')
+    pd.sigma=sigma{2};
+end
 
 IMptr      = handles.pop_field.Value;
 siteptr    = handles.site_menu_psda.Value;
@@ -10,6 +18,12 @@ IMs        = [opt.IM1;opt.IM2];
 Nsites     = size(handles.h.p,1);
 IND        = siteptr + Nsites*(IMptr-1);
 
+
+[slist,~,sf] = unique(handles.scenarios(:,  1)');
+[~,~,Lptr]   = unique(handles.scenarios(:,1:2),'rows','stable');
+if size(handles.L,3)==1
+    Lptr = ones(size(Lptr));
+end
 %% EMPIRICAL HAZARD CURVE FROM DSHA ANALYSIS
 lambdaIS   = zeros(Nim,1);
 Nscen      = size(handles.scenarios,1);
@@ -17,23 +31,26 @@ Y_IS       = zeros(Nscen,Nsim);
 
 Nz        = size(handles.L,1);
 cont      = 1;
-for i=1:length(handles.shakefield)
-    NM = length(handles.shakefield(i).mscl.M);
-    for j=1:NM
-        mu  = handles.shakefield(i).mulogIM(siteptr,IMptr,j);
-        Li  = handles.L(IND,:,handles.shakefield(i).Lptr(j));
-        Zi  = normrnd(0,1,[Nz,Nsim]);
+
+for i=slist
+    ind  = find(sf==i)';
+    
+    for j=ind
+        mu  = handles.mulogIM(j,IMptr,siteptr);
+        Li  = handles.L(IND,:,Lptr(j));
+        Zi  = random(pd,[Nz,Nsim]);
         Y_IS(cont,:) = exp(mu+Li*Zi);
         cont=cont+1;
     end
 end
 Y_IS    = Y_IS(:);
-rate_IS = prod(handles.scenarios(:,6:8),2);
+rate_IS = handles.scenarios(:,9);
 rate_IS = repmat(rate_IS/Nsim,1,Nsim);
 rate_IS = rate_IS(:);
 
+
 for i=1:Nim
-    lambdaIS(i)=sum(rate_IS(Y_IS>=im(i)));
+    lambdaIS(i)=rate_IS'*(Y_IS>im(i));
 end
 
 %% kmean Clusters
@@ -47,18 +64,15 @@ if ~isempty(handles.krate)
 end
 
 %% SEISMIC HAZARD CURVE FROM PSHA ANALYSIS (FOR COMPARISON PURPOSES)
-
-model_ptr  = unique(handles.scenarios(:,1));
-model      = handles.model(model_ptr);
-source_ptr = unique(handles.scenarios(:,2));
-
 IM         = IMs(IMptr);
-site       = handles.h.p(siteptr,:);
-Vs30       = handles.h.Vs30(siteptr);
-Nsource    = length(model.source);
-MRE        = runhazard1(im,IM,site,Vs30,opt,model,Nsource,1);
+h.p        = handles.h.p(siteptr,:);
+h.param    = handles.h.param;
+h.value    = handles.h.value(siteptr,:);
+
+Nsource    = length(handles.source);
+MRE        = runhazard1(im,IM,h,opt,handles.source,Nsource,1);
 lambdaPSHA = permute(MRE,[2,4,1,3]);
-lambdaPSHA = nansum(lambdaPSHA(:,source_ptr),2);
+lambdaPSHA = nansum(lambdaPSHA,2);
 
 
 %% plotting
@@ -105,7 +119,7 @@ set(handles.ax2,'uicontextmenu',c2);
 
 function[]=myfun(hObject, eventdata, handles) %#ok<INUSL>
 
-H=datacursormode(handles.FIGSeismicHazard);
+H=datacursormode(handles.fig);
 set(H,'enable','on','DisplayStyle','window','UpdateFcn',{@gethazarddata,handles.HazOptions.dbt(1)});
 w = findobj('Tag','figpanel');
 set(w,'Position',[ 409   485   150    60]);

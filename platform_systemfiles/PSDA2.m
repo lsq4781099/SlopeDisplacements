@@ -42,6 +42,7 @@ end
 handles.haz   = [];
 handles.haz2  = [];
 handles.AnalysisType = 'FPPBA';
+handles.ME = pshatoolbox_methods(5);
 guidata(hObject, handles);
 % uiwait(handles.FIGpsda);
 
@@ -138,8 +139,8 @@ end
 function Analysis_Callback(hObject, eventdata, handles)
 
 function runREG_Callback(hObject, eventdata, handles)
-if ~isfield(handles,'sys'), return;end
-if ~isempty(handles.model)
+
+if handles.mode1.Value==1 && strcmp(handles.mode1.Enable,'on')
     % Hazard for FPBPA
     handles.haz = haz_PSDA(handles);
     if strcmp(handles.AnalysisType,'PBPA')
@@ -150,13 +151,14 @@ if ~isempty(handles.model)
     handles     = runPSDA_regular(handles);
     handles.deleteButton.CData  = handles.CDataClosed;
     plot_PSDA_regular(handles)
+    handles.kdesign.Enable='on';
 end
-handles.kdesign.Enable='on';
+
 guidata(hObject,handles)
 
 function runCDM_Callback(hObject, eventdata, handles)
-if ~isfield(handles,'sys'), return;end
-if ~isempty(handles.modelcdm)
+
+if handles.mode2.Value==1 && strcmp(handles.mode2.Enable,'on')
     handles.haz2 = haz_PSDA_cdmM(handles);
     handles      = runPSDA_cdm(handles);
     handles.deleteButton.CData  = handles.CDataClosed;
@@ -180,7 +182,14 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function pop_site_Callback(hObject, eventdata, handles)
-plot_PSDA_regular(handles);
+
+if handles.mode1.Value==1 && strcmp(handles.mode1.Enable,'on')
+    plot_PSDA_regular(handles)
+end
+
+if handles.mode2.Value==1 && strcmp(handles.mode2.Enable,'on')
+    plot_PSDA_cdm(handles);
+end
 guidata(hObject,handles)
 
 function pop_site_CreateFcn(hObject, eventdata, handles)
@@ -221,15 +230,14 @@ if ~isfield(handles,'sys')
     return
 end
 
-[handles.T1,handles.T2,handles.T3,handles.Ts_param,handles.ky_param,handles.AnalysisType]=PSDA_Logic_tree2(...
-    handles.model,...
+[handles.T1,handles.T2,handles.T3,handles.AnalysisType,handles.paramPSDA]=PSDA_Logic_tree2(...
     handles.sys,...
-    handles.Ts_param,...
-    handles.ky_param,...
+    handles.h,...
     handles.T1,...
     handles.T2,...
     handles.T3,...
-    handles.AnalysisType);
+    handles.AnalysisType,...
+    handles.paramPSDA);
 
 [handles.tableREG.Data,handles.IJK]=main_psda(handles.T1,handles.T2,handles.T3);
 handles.dlist = SuitedForDeagg(handles);
@@ -246,6 +254,15 @@ handles.ax1=ax2Control(handles.ax1);
 function OptionsPSDA_Callback(hObject, eventdata, handles)
 if isfield(handles,'paramPSDA')
     handles.paramPSDA=PSDA2Parameters(handles.paramPSDA);
+    
+    % Update Table T2
+    kyval    = handles.allky(1,:);
+    Tsval    = handles.allTs(1,:);
+    handles.T2 = buildPSDA_T2(handles.paramPSDA,kyval,Tsval);
+    if isfield(handles,'T1')
+        [handles.tableREG.Data,handles.IJK]=main_psda(handles.T1,handles.T2,handles.T3);
+    end
+    
     guidata(hObject,handles)
 end
 
@@ -256,7 +273,7 @@ guidata(hObject,handles)
 function handles=wipePSDAModel(handles)
 
 if isfield(handles,'sys')
-    handles=rmfield(handles,{'sys','model','modelcdm','opt','h'});
+    handles=rmfield(handles,{'sys','opt','h'});
 end
 [handles.REG_Display,handles.CDM_Display]   = defaultPSDA_plotoptions;
 handles.haz               = [];
@@ -265,19 +282,18 @@ handles.FIGpsda.Name      = 'Probabilistic Slope Displacement Analysis - PSDA';
 handles.tableREG.Data     = cell(0,4);
 handles.tableCDM.Data     = cell(0,7);
 delete(findall(handles.ax1,'type','line'))
+handles.kdesign.Enable    = 'off';
 handles.runMRDeagg.Enable = 'off';
 handles.ref1.Visible      = 'off';
 
 function Tools_Callback(hObject, eventdata, handles)
 
 function CDM_DisplayOptions_Callback(hObject, eventdata, handles)
-if ~isfield(handles,'modelcdm') || isempty(handles.modelcdm)
-    return
+if handles.mode2.Value==1 && strcmp(handles.mode2.Enable,'on')
+    str    = handles.tableCDM.Data(:,1);
+    handles.CDM_Display = Display_Options_CDM(str,handles.CDM_Display);
+    plot_PSDA_cdm(handles);
 end
-Ntable = size(handles.tableCDM.Data,1);
-str    = compose('CDM Model %g',(1:Ntable)');
-handles.CDM_Display = Display_Options_CDM(str,handles.CDM_Display);
-plot_PSDA_cdm(handles);
 guidata(hObject,handles)
 
 function toggle1_Callback(hObject, eventdata, handles)
@@ -295,23 +311,9 @@ function uibuttongroup3_SelectionChangedFcn(hObject, eventdata, handles)
 
 switch hObject.String
     case 'Epistemic Uncertainty through Logic Tree'
-        handles.tableREG.Enable      = 'on';
-        handles.runREG.Enable = 'on';
-        handles.treebutton.Enable = 'on';
-        handles.REG_DisplayOptions.Enable = 'on';
-        handles.tableCDM.Enable = 'off';
-        handles.runCDM.Enable   = 'inactive';
-        handles.CDM_DisplayOptions.Enable='inactive';
         plot_PSDA_regular(handles)
         
     case 'Epistemic Uncertainty through Continuos D models'
-        handles.tableREG.Enable      = 'off';
-        handles.runREG.Enable = 'inactive';
-        handles.treebutton.Enable = 'inactive';
-        handles.REG_DisplayOptions.Enable = 'inactive';
-        handles.tableCDM.Enable = 'on';
-        handles.runCDM.Enable   = 'on';
-        handles.CDM_DisplayOptions.Enable='on';
         plot_PSDA_cdm(handles)
 end
 
@@ -521,32 +523,19 @@ L.Box      ='off';
 
 function kdesign_Callback(hObject, eventdata, handles)
 if isempty(handles.haz)
-    if ~isempty(handles.model)
-        handles.haz = haz_PSDA(handles);
-        if strcmp(handles.AnalysisType,'PBPA')
-            handles.haz = FP2PH(handles);
-        end
-        handles     = runPSDA_regular(handles);
-        handles.deleteButton.CData  = handles.CDataClosed;
-    end
+    return
+end
+prompt   = {'Return period (yr):','Allowable displacement Da(cm):'};
+dlgtitle = 'k-design';
+dims     = [1 50];
+definput = {'475','20'};
+answer   = inputdlg(prompt,dlgtitle,dims,definput);
+if isempty(answer)
+    return
 end
 
-if isfield(handles,'SPCData')
-    Tr = handles.SPCData(1);
-    Da = handles.SPCData(2);
-else
-    prompt   = {'Return period (yr):','Allowable displacement Da(cm):'};
-    dlgtitle = 'k-design';
-    dims     = [1 50];
-    definput = {'475','20'};
-    answer   = inputdlg(prompt,dlgtitle,dims,definput);
-    if isempty(answer)
-        return
-    end
-    Tr        = str2double(answer{1});
-    Da        = str2double(answer{2});
-end
-
+Tr        = str2double(answer{1});
+Da        = str2double(answer{2});
 tit       = sprintf('k-design: Tr = %g, Da = %g cm',Tr,Da);
 Nbranches = size(handles.IJK,1);
 kydata(1:Nbranches,1) = struct('d',[],'lambdaD',[],'ky',[],'error',[],'iter',[]);
@@ -555,6 +544,7 @@ model     = cell(Nbranches,1);
 delete(findall(handles.FIGpsda,'type','legend'))
 delete(findall(handles.ax1,'type','line'));drawnow
 XL = handles.paramPSDA.d([1 end]); plot(handles.ax1,XL,1/Tr*[1 1],'k--','tag','kdesign','handlevisibility','off')
+YL = handles.ax1.YLim;   plot(handles.ax1,Da*[1 1],YL,'k--','tag','kdesign','handlevisibility','off')
 drawnow
 handles.ax1.ColorOrderIndex=1;
 home
@@ -591,7 +581,6 @@ uimenu(c,'Label','Create Histogram'  ,'Callback',{@data2hist_uimenu,vertcat(kyda
 uimenu(c,'Label','Copy data'         ,'Callback',{@data2clipboard_uimenu,data});
 uimenu(c,'Label','Undock'            ,'Callback',{@figure2clipboard_uimenu,handles.ax1,tit});
 set(handles.ax1,'uicontextmenu',c);
-YL = handles.ax1.YLim; plot(handles.ax1,Da*[1 1],YL,'k--','tag','kdesign','handlevisibility','off')
 format(cF);
 
 function data2table_uimenu(~, ~,model,k)
