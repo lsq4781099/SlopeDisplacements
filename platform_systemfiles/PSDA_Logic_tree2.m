@@ -152,7 +152,9 @@ function Ts_mean_Callback(hObject, eventdata, handles)
 function Ts_cov_Callback(hObject, eventdata, handles)
 
 function Ts_nsta_Callback(hObject, eventdata, handles)
-handles.paramPSDA.Tssamples = max(str2double(hObject.String),0);
+value = round(max(str2double(hObject.String),1));
+handles.Ts_nsta.String      = sprintf('%g',value);
+handles.paramPSDA.Tssamples = value;
 val = handles.sitepop.Value;
 handles.table2.Data = buildPSDA_T2(handles.paramPSDA,handles.ky(val,:),handles.Ts(val,:));
 plotPSDALogicTree(handles)
@@ -163,7 +165,9 @@ function ky_mean_Callback(hObject, eventdata, handles)
 function ky_cov_Callback(hObject, eventdata, handles)
 
 function ky_nsta_Callback(hObject, eventdata, handles)
-handles.paramPSDA.kysamples = max(str2double(hObject.String),0);
+value = round(max(str2double(hObject.String),1));
+handles.ky_nsta.String      = sprintf('%g',value);
+handles.paramPSDA.kysamples = value;
 val = handles.sitepop.Value;
 handles.table2.Data = buildPSDA_T2(handles.paramPSDA,handles.ky(val,:),handles.Ts(val,:));
 plotPSDALogicTree(handles)

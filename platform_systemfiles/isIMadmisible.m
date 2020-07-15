@@ -49,7 +49,8 @@ switch gmm
     case 'CB11'                      , IMlist=[0 0 0 0 1 0 0 0 0 0 0];    cf=[1,1,1,1,980.66,1,1,1,1,1,1];
     case 'CB19'                      , IMlist=[0 0 0 0 1 1 0 0 0 0 0];    cf=[1,1,1,1,100,100,1,1,1,1,1];
     case 'KM06'                      , IMlist=[0 0 0 0 1 0 0 0 0 0 0];    cf=[1,1,1,1,100,1,1,1,1,1,1];
-    case 'medianPCE_bchydro'         , IMlist=[1 0 0 0 1 0 0 0 0 0 0];    cf=[1,1,1,1,100,1,1,1,1,1,1];
+    case 'medianPCE_bchydro'         , IMlist=[1 0 0 0 1 0 0 0 0 0 0];    cf=[1,1,1,1,1,1,1,1,1,1,1];
+    case 'medianPCE_nga'             , IMlist=[1 0 0 0 1 0 0 0 0 0 0];    cf=[1,1,1,1,1,1,1,1,1,1,1];
     case 'Macedo2019'                , IMlist=[0 0 0 0 0 1 0 0 0 0 0];    cf=[1 1 1 1 1 100 1 1 1 1 1];
     case 'Macedo2020'                , IMlist=[1 0 0 0 0 0 0 1 0 0 0];    cf=[1,1,1,1,1,1,1,1,1,1,1];
 end

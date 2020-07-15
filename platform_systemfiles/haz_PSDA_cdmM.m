@@ -8,14 +8,16 @@ TCDM      = handles.tableCDM.Data(:,2:5);
 haz=struct('imstandard',[],'IMstandard',[],'lambda',[],'deagg',[],'imvector',[],'IMvector',[],'corrlist',[],'MRD',[]);
 
 if any(ismember(imethod,6))
-    handles.opt   = opt_update(handles,usedM,opt);
-    branch        = regexp(handles.tableCDM.Data(:,2),'\,','split');
-    branch        = unique(str2double(vertcat(branch{:})),'rows');
-    nub           = size(branch,1);
-    handles.sys.branch = [branch,nan(nub,3),ones(nub,1)];
+    handles.opt        = opt_update(handles,usedM,opt);
+    branch             = regexp(handles.tableCDM.Data(:,2),'\,','split');
+    branch             = unique(str2double(vertcat(branch{:})),'rows','stable');
+    handles.sys.branch = branch;
+    handles.sys.weight = ones(size(branch,1),5);
+        
     haz.imstandard = handles.opt.im;
     haz.IMstandard = handles.opt.IM;
     [haz.lambda,haz.deagg]=runlogictree2(handles.sys,handles.opt,handles.h,handles.site_selection);
+    haz.IMstandard = handles.opt.IM;
 end
 
 

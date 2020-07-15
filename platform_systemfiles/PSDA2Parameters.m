@@ -29,13 +29,8 @@ if nargin==4
     handles.kysamples.String = sprintf('%g',iparam.kysamples);
     handles.Tssamples.String = sprintf('%g',iparam.Tssamples);
     
-    
     handles.butt1.Value   = strcmp(iparam.optimize ,'on');
     handles.butt2.Value   = strcmp(iparam.optimize ,'off');
-    handles.butt3.Value   = strcmp(iparam.imhazard ,'full');
-    handles.butt4.Value   = strcmp(iparam.imhazard ,'average');
-    handles.butt5.Value   = strcmp(iparam.method   ,'PC');
-    handles.butt6.Value   = strcmp(iparam.method   ,'MC');
     handles.butt7.Value   = strcmp(iparam.rng      ,'shuffle');
     handles.butt8.Value   = strcmp(iparam.rng      ,'default');    
 end
@@ -55,16 +50,6 @@ outparam.realD  = str2double(handles.realD.String);
 switch handles.butt1.Value
     case 1, outparam.optimize = 'on';
     case 0, outparam.optimize = 'off';
-end
-
-switch handles.butt3.Value
-    case 1, outparam.imhazard = 'full';
-    case 0, outparam.imhazard = 'average';
-end
-
-switch handles.butt5.Value
-    case 1, outparam.method = 'PC';
-    case 0, outparam.method = 'MC';
 end
 
 switch handles.butt7.Value

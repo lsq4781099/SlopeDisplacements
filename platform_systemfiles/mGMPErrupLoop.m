@@ -301,6 +301,11 @@ switch str
     case 'medianPCE_bchydro'
         param{1} = SUB.rpMag;
         param{2} = SUB.rpRrup;
-        Rrup     = SUB.rpRrup;        
+        Rrup     = SUB.rpRrup; 
+        
+    case 'medianPCE_nga'
+        param{1} = SC.rpMag;
+        param{2} = SC.rpRrup;
+        Rrup     = SC.rpRrup;         
         
 end

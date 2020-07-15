@@ -888,12 +888,22 @@ switch str
         
     case 'medianPCE_bchydro'
         set(txt(1:3),'Visible','on');
-        set(edi(1:37),'Visible','on');
+        set(edi(1:3),'Visible','on');
         handles.t1.String='M';
         handles.t2.String='Rrup';
         handles.t3.String='Vs30';
         handles.e1.String=SUB.Mag;
         handles.e2.String=SUB.Rrup;
         handles.e3.String=VS30;
+        
+    case 'medianPCE_nga'
+        set(txt(1:3),'Visible','on');
+        set(edi(1:3),'Visible','on');
+        handles.t1.String='M';
+        handles.t2.String='Rrup';
+        handles.t3.String='Vs30';
+        handles.e1.String=SC.Mag;
+        handles.e2.String=SC.Rrup;
+        handles.e3.String=VS30;        
 end
 

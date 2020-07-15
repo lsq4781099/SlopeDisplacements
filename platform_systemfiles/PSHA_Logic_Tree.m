@@ -130,8 +130,8 @@ ky_param=[str2double(handles.ky_mean.String),...
     str2double(handles.ky_cov.String),...
     str2double(handles.ky_nsta.String)];
 
-[Ts,~,dPTs] = trlognpdf_psda(Ts_param);
-[ky,~,dPky] = trlognpdf_psda(ky_param);
+[Ts,dPTs] = trlognpdf_psda(Ts_param);
+[ky,dPky] = trlognpdf_psda(ky_param);
 
 Ts          = round(Ts*1e10)/1e10;
 [ind1,ind2] = meshgrid(1:length(Ts),1:length(ky));

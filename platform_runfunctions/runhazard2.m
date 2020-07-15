@@ -81,17 +81,19 @@ end
 switch source.gmm.type
     case 'pce'
         for j=1:NIM
-            [mu,sig] = source.gmm.handle(IM(j),param{:});
-            mu  = mean(mu,1)';
-            sig = sig(:);
+            switch func2str(source.gmm.handle)
+                case 'PCE_nga'     ,[mu,sig] = medianPCE_nga(IM(j),param{:});
+                case 'PCE_bchydro' ,[mu,sig] = medianPCE_bchydro(IM(j),param{:});
+            end
             sig = sig.^std_exp*sig_overw;
             imj = im(:,j);
             for i=1:Nim
                 xhat        = (log(imj(i))-mu)./sig;
-                ccdf        = 0.5*(PHI-erf(xhat/sqrt(2)));
-                deagg{i,j}  = [Mag,Rrup,NMmin*ccdf.*rate];
+                ccdf        = (0.5*(1-erf(xhat/sqrt(2)))-PHI)*1/(1-PHI);
+                ccdf        = ccdf.*(ccdf>0);
+                dsum        = [Mag,Rrup,mu];
+                deagg{i,j}  = [dsum(:,dflag),NMmin*ccdf.*rate];
             end
-            
         end
         
     otherwise

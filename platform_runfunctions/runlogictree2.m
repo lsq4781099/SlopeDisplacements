@@ -9,8 +9,8 @@ NIM       = length(IM);
 Nbranch   = size(sys.branch,1);
 weights   = sys.weight(:,5);
 Nsource   = max(sum(sys.Nsrc,1));
-if ~isfield(opt,'dflags')
-    opt.dflags=[true true false];
+if ~isfield(opt,'dflag')
+    opt.dflag=[true true false];
 end
 
 %% do not run analysis if ind is empty

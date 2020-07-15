@@ -51,19 +51,15 @@ if ~isnan(ptrs(1,1))
     handles.paramPSDA.d         = eval(str{1}{2});
     handles.paramPSDA.realSa    = str2double(str{2}{2});
     handles.paramPSDA.realD     = str2double(str{3}{2});
-    handles.paramPSDA.imhazard  = str{4}{2};
-    handles.paramPSDA.rng       = str{5}{2};
-    handles.paramPSDA.method    = str{6}{2};
-    handles.paramPSDA.optimize  = str{7}{2};
-    handles.paramPSDA.kysamples = str2double(str{8}{2});
-    handles.paramPSDA.Tssamples = str2double(str{9}{2});
+    handles.paramPSDA.rng       = str{4}{2};
+    handles.paramPSDA.optimize  = str{5}{2};
+    handles.paramPSDA.kysamples = str2double(str{6}{2});
+    handles.paramPSDA.Tssamples = str2double(str{7}{2});
 else
     handles.paramPSDA.d         = d_default;
     handles.paramPSDA.realSa    = Sadef;
     handles.paramPSDA.realD     = Ddef;
-    handles.paramPSDA.imhazard  = 'full';
     handles.paramPSDA.rng       = 'shuffle';
-    handles.paramPSDA.method    = 'MC';
     handles.paramPSDA.optimize  = 'on';
     handles.paramPSDA.kysamples = 0;
     handles.paramPSDA.Tssamples = 0;
@@ -91,7 +87,12 @@ if ~isnan(ptrs(2,1))
             fixparam = struct(stri{2:end});
             flds     = fields(fixparam);
             for j=1:length(flds)
-                fixparam.(flds{j})=str2double(fixparam.(flds{j}));
+                val = fixparam.(flds{j});
+                if isnan(str2double(val))
+                    fixparam.(flds{j})=val;
+                else
+                    fixparam.(flds{j})=str2double(val);
+                end
             end
             SMLIB(i).param   = fixparam;
         end

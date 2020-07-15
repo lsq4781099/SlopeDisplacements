@@ -215,8 +215,8 @@ function T2=T2settle(nQ,nPGA,wHL)
 
 wHL=wHL(:);
 % wHL(wHL==0)=[];
-[~,~,wQ]   = trlognpdf_psda([1 0.2 nQ]);
-[~,~,wLBS] = trlognpdf_psda([1 0.2 nPGA]);
+[~,wQ]   = trlognpdf_psda([1 0.2 nQ]);
+[~,wLBS] = trlognpdf_psda([1 0.2 nPGA]);
 [II,JJ,KK]=meshgrid(1:nQ,1:nPGA,1:length(wHL)); II=II(:); JJ=JJ(:);KK=KK(:);
 T2=[wQ(II),wLBS(JJ),wHL(KK),wQ(II).*wLBS(JJ).*wHL(KK)];
 

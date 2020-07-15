@@ -92,7 +92,8 @@ for jj=1:Ndepend
         case 'CB11',                          param = [M,rrup,rjb,ztor,dip,VS30,usp];
         case 'CB19',                          param = [M,rrup,rjb,UNK,UNK,ztor,zhyp,dip,999,VS30,usp];
         case 'KM06',                          param = [M,rrup,usp];
-        case 'medianPCE_bchydro',             param = [M,rrup,VS30,usp];            
+        case 'medianPCE_bchydro',             param = [M,rrup,VS30,usp];  
+        case 'medianPCE_nga',                 param = [M,rrup,VS30,usp];
         case 'PCE_nga',                       param = [M,rrup,VS30,usp];
         case 'PCE_bchydro',                   param = [M,rrup,VS30,usp];
         case 'udm'

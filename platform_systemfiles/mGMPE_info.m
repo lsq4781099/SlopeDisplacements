@@ -89,7 +89,8 @@ switch lower(model)
     case 'cb11',                       IM = -4;
     case 'cb19',                       IM = [-5 -4];
     case 'km06',                       IM = -4;
-    case 'medianpce_bchydro',          IM = [0.01 0.02 0.05 0.075 0.1 0.15 0.2 0.25 0.3 0.4 0.5 0.6 0.75 1 1.5 2 2.5 3];    
+    case 'medianpce_bchydro',          IM = [0.01 0.02 0.05 0.075 0.1 0.15 0.2 0.25 0.3 0.4 0.5 0.6 0.75 1 1.5 2 2.5 3];
+    case 'medianpce_nga',              IM = [0.001 0.02 0.03 0.05 0.075 0.1 0.15 0.2 0.25 0.3 0.4 0.5 0.75 1 1.5 2 3 4 5 6 7 8 10];
 
     case 'udm',                        IM = [];
     case 'macedo2019',                 IM = -5;
@@ -151,10 +152,11 @@ if nargout>=2
         case 'cb19',                       Rmetric=[1 0 1 0 0 1 0 1 1 0 1];  Residuals = 'lognormal';
         case 'km06',                       Rmetric=[1 0 0 0 0 0 0 0 0 0 0];  Residuals = 'lognormal';
         case 'medianpce_bchydro',          Rmetric=[1 0 0 0 0 0 0 0 0 0 0];  Residuals = 'lognormal';
+        case 'medianpce_nga',              Rmetric=[1 0 0 0 0 0 0 0 0 0 0];  Residuals = 'lognormal';
         case 'udm',                        Rmetric=[];                       Residuals = '';
         case 'macedo2019',                 Rmetric=[1 0 0 0 0 0 0 0 0 0 0];  Residuals = 'lognormal';    
         case 'macedo2020',                 Rmetric=[1 0 0 0 0 0 0 0 0 0 0];  Residuals = 'lognormal';
-        case 'pce_nga',                    Rmetric=[1 0 1 0 0 1 1 0 1 0 0];  Residuals = 'lognormal';
+        case 'pce_nga',                    Rmetric=[1 0 0 0 0 0 0 0 0 0 0];  Residuals = 'lognormal';
         case 'pce_bchydro',                Rmetric=[1 0 0 0 0 0 0 0 0 0 0];  Residuals = 'lognormal';    
         case 'franky',                     Rmetric=[];                       Residuals = '';            
     end

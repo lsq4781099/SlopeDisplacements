@@ -467,4 +467,10 @@ switch handles.methods(val2).str
         Rrup      = str2double(str{2});
         Vs30      = str2double(str{3});
         param     = {M,Rrup,Vs30};
+        
+    case 'medianPCE_nga'
+        M         = str2double(str{1});
+        Rrup      = str2double(str{2});
+        Vs30      = str2double(str{3});
+        param     = {M,Rrup,Vs30};        
 end

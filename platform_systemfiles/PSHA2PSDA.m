@@ -22,7 +22,13 @@ ind=find(prod(isnan(M),2));
 M(ind,:)=[];
 Deag(ind,:)=[];
 
-Mbins   = round([5:0.2:9.4;5.2:0.2:9.6]'*1e6)/1e6;
+% was
+% Mbins   = round([5:0.2:9.4;5.2:0.2:9.6]'*1e6)/1e6;
+%----------------------------------
+mm = M(1):0.1:M(end);
+Mbins   = round([mm(1:end-1);mm(2:end)]'*1e3)/1e3;
+%----------------------------------
+
 Mag     = 0.5*(Mbins(:,1)+Mbins(:,2));
 nM      = size(Mbins,1);
 nSa     = size(Sa,2);

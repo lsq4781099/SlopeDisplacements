@@ -1,9 +1,9 @@
-function[MRE]=runMCS(source,r0,IM,im,Nreal,ellip,hparam)
+function[MRE,Cz]=runMCS(source,r0,IM,im,Nreal,ellip,hparam)
 
 pd   = makedist('Normal');
 t    = truncate(pd,-2,2);
 zrnd = random(t,1,Nreal);
-
+Cz   = []; % dummy variable
 gmpe     = source.gmm;
 NIM      = length(IM);
 Nim      = size(im,1);
@@ -39,12 +39,3 @@ for j=1:NIM
     MRE(:,j,:)=MCS;
     
 end
-
-return
-
-
-
-
-
-
-

@@ -5,7 +5,6 @@ drawnow
 optlib = handles.optlib;
 sett   = optlib.sett;
 Nsett  = length(sett);
-ShearMod  = handles.opt.ShearModulus;
 IJK    = handles.IJK;
 T1     = handles.T1;
 T3     = handles.T3;

@@ -75,7 +75,7 @@ function T2= T2settle(nQ,weightLBS,wHL)
 wHL=wHL(:);
 wHL(wHL==0)=[];
 
-[~,~,wQ]    = trlognpdf_psda([1 0.2 nQ]);
+[~,wQ]      = trlognpdf_psda([1 0.2 nQ]);
 nLBS        = length(weightLBS);
 [II,JJ,KK]  = meshgrid(1:nQ,1:nLBS,1:length(wHL)); II=II(:); JJ=JJ(:);KK=KK(:);
 T2          = [wQ(II),weightLBS(JJ),wHL(KK),wQ(II).*weightLBS(JJ).*wHL(KK)];

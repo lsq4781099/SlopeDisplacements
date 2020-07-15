@@ -1,32 +1,26 @@
-function[lambdaD]=psda_BT2007_cdm (Ts_param, ky_param, psda_param, im,HAZ,Cz)
+function[lambdaD]=psda_BT2007_cdm (Ts_, ky_, param, im,MRE,Cz,NMmin)
 
 % Bray, J. D., & Travasarou, T. (2007). Simplified procedure for estimating
 % earthquake-induced deviatoric slope displacements. Journal of Geotechnical
 % and Geoenvironmental Engineering, 133(4), 381-392.
 
-%%
-d      = psda_param.d;
-realSa = psda_param.realSa;
-realD  = psda_param.realD;
+d      = param.d;
+realSa = param.realSa;
+realD  = param.realD;
 Nd     = length(d);     % N° of displacement values of lambdaD
 Nim    = length(im);    % N° of acceleration values of lambdaSa
+pd     = makedist('Normal');
+t      = truncate(pd,-2,2);  % changed here
+xrnd   = random(t,1,realD);
+zrnd   = random(t,1,realSa);
 
-pd    = makedist('Normal');
-t     = truncate(pd,-2,2);  % changed here
-xrnd  = random(t,1,realD);
-zrnd  = random(t,1,realSa);
+% ky and Ts realizations
+Nky  = 100; realky = trlognpdf_psda(ky_,Nky);
+NTs  = 100; realTs = trlognpdf_psda(Ts_,NTs);
+[ky,Ts]  = meshgrid(realky,realTs);
 
-if length(Ts_param)==2, Ts_param = [Ts_param,100]; end; NTs = Ts_param(3);
-if length(ky_param)==2, ky_param = [ky_param,100]; end; Nky = ky_param(3);
-
-[ky,Ts]  = meshgrid(trlognpdf_psda(ky_param),trlognpdf_psda(Ts_param));
 ky       = ky(:)';
 Ts       = Ts(:)';
-
-if strcmp(psda_param.imhazard,'average')
-    Percent = 50;
-    HAZ     = repmat(prctile(HAZ,Percent,2),1,realSa);
-end
 
 lnd  = zeros(Nim,Nky*NTs);
 Tlow = Ts<0.05;
@@ -38,91 +32,103 @@ mean_d  = mean(lnd, 2);
 std_d   = std(lnd,[], 2);
 sigmaD  = 0.67;
 
-lambdaD = zeros(realD*realSa, Nd);
-switch psda_param.method
-    case 'MC'
+st      = sprintf('%s-%s',param.integration,param.hazard);
+switch st
+    case 'MC-full'
+        MRE     = permute(MRE,[1 3 2]);
+        lambdaD = zeros(realD*realSa, Nd);
         for i = 1:Nd
             for j = 1:realD
                 xhat = (log(d(i)) - (mean_d + std_d* xrnd(j)))/sigmaD;
                 Pd   = 0.5*(1-erf(xhat/sqrt(2)));
                 IND  = (1:realSa)+realSa*(j-1);
-                lambdaD(IND,i) = trapz(Pd,HAZ)';   % simpson rule
+                lambdaD(IND,i) = trapz(Pd,MRE)';   % simpson rule
             end
         end
         
-    case 'PC'
-        
-        PC_term_0_GM = Cz(1:Nim, 1)';
-        PC_term_1_GM = Cz(1:Nim, 2)';
-        PC_term_2_GM = Cz(1:Nim, 3)';
-        PC_term_3_GM = Cz(1:Nim, 4)';
-        PC_term_4_GM = Cz(1:Nim, 5)';
-        
-        Hazard_PC_samples = zeros(realSa, Nim);
-        
-        for i = 1:Nim
-            Hazard_PC_samples(:, i) = PC_term_0_GM(i) + ...
-                PC_term_1_GM(i) * zrnd + ...
-                PC_term_2_GM(i) * (zrnd.^2-1) + ...
-                PC_term_3_GM(i) * (zrnd.^3 - 3*zrnd) + ...
-                PC_term_4_GM(i) * (zrnd.^4 - 6*zrnd.^2 + 3);
-        end
-        
-        dlambdaPC = zeros(5, Nim);
-        dlambdaPC(1, 1:end-1) = diff(-PC_term_0_GM(1, :),1,2);
-        dlambdaPC(2, 1:end-1) = diff(-PC_term_1_GM(1, :),1,2);
-        dlambdaPC(3, 1:end-1) = diff(-PC_term_2_GM(1, :),1,2);
-        dlambdaPC(4, 1:end-1) = diff(-PC_term_3_GM(1, :),1,2);
-        dlambdaPC(5, 1:end-1) = diff(-PC_term_4_GM(1, :),1,2);
-        dlambdaPC(:,end) = dlambdaPC(:,end);
-        
-        PC_term_0_array = zeros(Nd,5,Nim);
-        PC_term_1_array = zeros(Nd,5,Nim);
-        PC_term_2_array = zeros(Nd,5,Nim);
-        PC_term_3_array = zeros(Nd,5,Nim);
-        PC_term_4_array = zeros(Nd,5,Nim);
-        logd = log(d(:));
+    case 'PC-full'
+        lambdaD   = zeros(realD*realSa, Nd);
+        dlambdaPC = - NMmin*[diff(Cz,1);zeros(1,5)]';
+        HD        = [H(0,xrnd);H(1,xrnd); H(2,xrnd);H(3,xrnd);H(4,xrnd)];
+        HSa       = [H(0,zrnd);H(1,zrnd); H(2,zrnd);H(3,zrnd);H(4,zrnd)];
+        PC0       = zeros(Nd,5,Nim);
+        PC1       = zeros(Nd,5,Nim);
+        PC2       = zeros(Nd,5,Nim);
+        PC3       = zeros(Nd,5,Nim);
+        PC4       = zeros(Nd,5,Nim);
+        logd      = log(d(:));
         for k = 1:5
             for i = 1:Nim
                 A_s = - std_d(i)^2/(2*sigmaD^2) - 1/2;
                 B_s = (logd - mean_d(i))*std_d(i)/(sigmaD^2);
                 C_s = -(logd - mean_d(i)).^2 * 1/(2*sigmaD^2);
-                PC_term_0_array(:,k,i) = 1/1 * (1 - normcdf((logd - mean_d(i))/(sqrt(sigmaD^2 + std_d(i)^2))))*dlambdaPC(k, i);
-                PC_term_1_array(:,k,i) = 1/1 * (std_d(i)/(sigmaD *2*pi) .* (sqrt(pi)/sqrt(-A_s))* exp(C_s -B_s.^2/(4*A_s)))*dlambdaPC(k, i);
-                PC_term_2_array(:,k,i) = 1/2 * (std_d(i)/(sigmaD *2*pi) .* (sqrt(pi)*B_s/(2*(-A_s)^(3/2))).* exp(C_s -B_s.^2/(4*A_s)))*dlambdaPC(k, i);
-                PC_term_3_array(:,k,i) = 1/6 * (std_d(i)/(sigmaD *2*pi) .* (sqrt(pi)*(-2*A_s*(1 + 2*A_s) + B_s.^2)/(4*(-A_s)^(5/2))).* exp(C_s -B_s.^2/(4*A_s)))*dlambdaPC(k, i);
-                PC_term_4_array(:,k,i) = 1/24 * (std_d(i)/(sigmaD *2*pi) .* (sqrt(pi)*(-B_s).*(6*A_s*(1 + 2*A_s) - B_s.^2)/(8*(-A_s)^(7/2))).* exp(C_s -B_s.^2/(4*A_s)))*dlambdaPC(k, i);
+                PC0(:,k,i) =  1/1 * (1 - normcdf((logd - mean_d(i))/(sqrt(sigmaD^2 + std_d(i)^2))))*dlambdaPC(k, i);
+                PC1(:,k,i) =  1/1 * (std_d(i)/(sigmaD *2*pi) .* (sqrt(pi)/sqrt(-A_s))* exp(C_s -B_s.^2/(4*A_s)))*dlambdaPC(k, i);
+                PC2(:,k,i) =  1/2 * (std_d(i)/(sigmaD *2*pi) .* (sqrt(pi)*B_s/(2*(-A_s)^(3/2))).* exp(C_s -B_s.^2/(4*A_s)))*dlambdaPC(k, i);
+                PC3(:,k,i) =  1/6 * (std_d(i)/(sigmaD *2*pi) .* (sqrt(pi)*(-2*A_s*(1 + 2*A_s) + B_s.^2)/(4*(-A_s)^(5/2))).* exp(C_s -B_s.^2/(4*A_s)))*dlambdaPC(k, i);
+                PC4(:,k,i) = 1/24 * (std_d(i)/(sigmaD *2*pi) .* (sqrt(pi)*(-B_s).*(6*A_s*(1 + 2*A_s) - B_s.^2)/(8*(-A_s)^(7/2))).* exp(C_s -B_s.^2/(4*A_s)))*dlambdaPC(k, i);
             end
-            
         end % End loop over PC terms Hazard!!
-        PC0 = sum(PC_term_0_array,3);
-        PC1 = sum(PC_term_1_array,3);
-        PC2 = sum(PC_term_2_array,3);
-        PC3 = sum(PC_term_3_array,3);
-        PC4 = sum(PC_term_4_array,3);
         
-        HD      = zeros(5,realD);
-        HSa     = zeros(5,realSa);
-        for i=1:5
-            HD (i,:)= H(i-1,xrnd);
-            HSa(i,:)= H(i-1,zrnd');
-        end
-        
+        PC0 = sum(PC0,3);
+        PC1 = sum(PC1,3);
+        PC2 = sum(PC2,3);
+        PC3 = sum(PC3,3);
+        PC4 = sum(PC4,3);
         for i = 1:Nd
             cont = 1;
+            CPC = [PC0(i,:);PC1(i,:);PC2(i,:);PC3(i,:);PC4(i,:)];
             for j = 1:realD
-                HD1=HD(1,j);
-                HD2=HD(2,j);
-                HD3=HD(3,j);
-                HD4=HD(4,j);
-                HD5=HD(5,j);
                 for k = 1:realSa
-                    for l = 1:5 % Loop over PC terms hazard
-                        Hlk = HSa(l,k);
-                        lambdaD(cont, i) =lambdaD(cont, i)+Hlk*(PC0(i, l)*HD1+PC1(i,l)*HD2+PC2(i,l)*HD3+PC3(i,l)*HD4+ PC4(i,l)*HD5);
-                    end
+                    lambdaD(cont, i) = HD(:,j)'*CPC*HSa(:,k);
                     cont = cont + 1;
                 end
             end
         end
+
+    case 'MC-average'
+        lambdaD = zeros(realD, Nd);
+        Percent = 50;
+        MRE     = permute(MRE,[1 3 2]);
+        MRE     = prctile(MRE,Percent,2);
+        
+        for i = 1:Nd
+            for j = 1:realD
+                xhat = (log(d(i)) - (mean_d + std_d* xrnd(j)))/sigmaD;
+                Pd   = 0.5*(1-erf(xhat/sqrt(2)));
+                lambdaD(j,i) = trapz(Pd,MRE);   % simpson rule
+            end
+        end
+        
+    case 'PC-average'
+        Haz50      = prctile(MRE,50,3);
+        dlambdaPCP = -[diff(Haz50,1);0]';
+        HD         = [H(0,xrnd);H(1,xrnd); H(2,xrnd);H(3,xrnd);H(4,xrnd)];
+        
+        PC0 = zeros(Nim,Nd);
+        PC1 = zeros(Nim,Nd);
+        PC2 = zeros(Nim,Nd);
+        PC3 = zeros(Nim,Nd);
+        PC4 = zeros(Nim,Nd);
+        logd = log(d(:));
+        
+        for i = 1:Nim
+            A_s = - std_d(i)^2/(2*sigmaD^2) - 1/2;
+            B_s = (logd - mean_d(i))*std_d(i)/(sigmaD^2);
+            C_s = -(logd - mean_d(i)).^2 * 1/(2*sigmaD^2);
+            PC0(i,:) =  1/1 * (1 - normcdf((logd - mean_d(i))/(sqrt(sigmaD^2 + std_d(i)^2))))*dlambdaPCP(i);
+            PC1(i,:) =  1/1 * (std_d(i)/(sigmaD *2*pi) .* (sqrt(pi)/sqrt(-A_s))* exp(C_s -B_s.^2/(4*A_s)))*dlambdaPCP(i);
+            PC2(i,:) =  1/2 * (std_d(i)/(sigmaD *2*pi) .* (sqrt(pi)*B_s/(2*(-A_s)^(3/2))).* exp(C_s -B_s.^2/(4*A_s)))*dlambdaPCP(i);
+            PC3(i,:) =  1/6 * (std_d(i)/(sigmaD *2*pi) .* (sqrt(pi)*(-2*A_s*(1 + 2*A_s) + B_s.^2)/(4*(-A_s)^(5/2))).* exp(C_s -B_s.^2/(4*A_s)))*dlambdaPCP(i);
+            PC4(i,:) = 1/24 * (std_d(i)/(sigmaD *2*pi) .* (sqrt(pi)*(-B_s).*(6*A_s*(1 + 2*A_s) - B_s.^2)/(8*(-A_s)^(7/2))).* exp(C_s -B_s.^2/(4*A_s)))*dlambdaPCP(i);
+        end
+        
+        PC0 = sum(PC0,1);
+        PC1 = sum(PC1,1);
+        PC2 = sum(PC2,1);
+        PC3 = sum(PC3,1);
+        PC4 = sum(PC4,1);
+        
+        PC      = [PC0;PC1;PC2;PC3;PC4];
+        lambdaD = HD'*PC;
 end

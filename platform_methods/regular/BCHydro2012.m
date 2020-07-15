@@ -231,7 +231,7 @@ t15=Coeff(13);
 t16=Coeff(14);
 phi   = 0.6;
 tau   = 0.43;
-sigma = 0.74;
+sigma = sqrt(phi^2+tau^2);
 
 n  = 1.18;
 c  = 1.88;

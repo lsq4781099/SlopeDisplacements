@@ -62,7 +62,7 @@ if haz.L0
         lambdaD(lambdaD<0)=nan;
         lam2 = exp(prctile(log(lambdaD),percentile,1));
         for jj=1:Nt
-            plot(handles.ax1,d',lam2(jj,:)','linewidth',2,'DisplayName',str{jj});
+            plot(handles.ax1,d',lam2(jj,:)','--','linewidth',2,'DisplayName',str{jj});
         end
     end
     
@@ -156,7 +156,6 @@ uimenu(c,'Label','Undock','Callback',           {@figure2clipboard_uimenu,handle
 uimenu(c,'Label','Undock & compare','Callback', {@figurecompare_uimenu,handles.ax1});
 set(handles.ax1,'uicontextmenu',c);
 format(cF);
-handles.ax1.Layer='top';
 
 if isfield(handles.sys,'D') && isfield(handles.sys,'lambdaDTest')
    Nrows = size(handles.sys.lambdaDTest,1);
@@ -166,5 +165,9 @@ if isfield(handles.sys,'D') && isfield(handles.sys,'lambdaDTest')
        plot(handles.ax1,handles.sys.D,handles.sys.lambdaDTest(i,:),'o','DisplayName',lab_i);
    end
 end
+
+handles.ax1.Layer='top';
+handles.ax1.YLim=[1e-6 1e-1];
+
 
 

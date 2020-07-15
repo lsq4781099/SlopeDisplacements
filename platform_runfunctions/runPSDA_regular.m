@@ -111,7 +111,7 @@ for site_ptr=1:Nsites
                 im         = handles.haz.imvector;
                 MRD        = handles.haz.MRD(site_ptr,:,:,source_ptr,indT1,rho_ptr);
                 MRD        = permute(MRD,[2 3 1]);
-                [Tm,~,dP]  = trlognpdf_psda([param.Tm_mean,param.Tm_cov,param.Tm_Nsta]);
+                [Tm,dP]    = trlognpdf_psda([param.Tm_mean,param.Tm_cov,param.Tm_Nsta]);
                 if max(MRD(:))>0
                     for ix = 1:length(Tm)
                         [im2,MRDkvkm]  = computeMRDkmkv(Ts, Tm(ix), im, MRD,param.rhok);

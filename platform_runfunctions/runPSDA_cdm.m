@@ -6,9 +6,8 @@ d          = psda_param.d;
 realSa     = handles.paramPSDA.realSa;
 realD      = handles.paramPSDA.realD;
 RandType   = handles.paramPSDA.rng;    % shuffle or default
-meth       = handles.paramPSDA.method; % MC or PC
-
 Nscenarios = realSa*realD;
+
 Nd         = length(d);
 opt0       = handles.opt;
 optL       = handles.opt;
@@ -20,7 +19,7 @@ handles.site_selection = 1:size(handles.h.p,1);
 Nsites     = length(handles.site_selection);
 Nsources   = max(sum(handles.sys.Nsrc,1));
 Nmodels    = size(handles.tableCDM.Data,1);
-handles.lambdaCDM = zeros(Nscenarios,Nsites,Nd,Nsources,Nmodels);
+handles.lambdaCDM = nan(Nscenarios,Nsites,Nd,Nsources,Nmodels);
 
 fprintf('\n');
 spat  = 'Site %-17g | Branch %-3g of %-49g Runtime:  %-4.3f s\n';
@@ -38,7 +37,7 @@ rng(RandType);
 for site_ptr=1:Nsites
     h.p     = handles.h.p(site_ptr,:);
     h.param = handles.h.param;
-    h.value = handles.h.value(site_ptr);
+    h.value = handles.h.value(site_ptr,:);
     r0      = gps2xyz(h.p,ellipsoid);
     
     Ts_param = handles.allTs(site_ptr,:);
@@ -73,28 +72,33 @@ for site_ptr=1:Nsites
             
             [~,period_ptr]  = intersect(optL.IM,IMslope);
             im              = optL.im(:,period_ptr);
-
-            if integrator==5 && strcmp(meth,'PC')
-                t1=cputime;[~,Cz]  = runPCE(source,r0,IMslope,im,realSa,ellipsoid,h.param); t1 = cputime-t1;
-                t2=cputime;lambda  = fun(Ts_param, ky_param,psda_param, im,[],Cz);  t2 = cputime-t2;
-                %disp([t1 t2])
-            end
-
-            if integrator==5 && strcmp(meth,'MC')
-                t1=cputime;MRE     = runMCS(source,r0,IMslope,im,realSa,ellipsoid,h.param); MRE = permute(MRE,[1 3 2]); t1 = cputime-t1;
-                t2=cputime;lambda  = fun(Ts_param, ky_param, psda_param, im, MRE,[]);t2 = cputime-t2;
-                %disp([t1 t2])
-            end
             
+            if integrator==115
+                loc_param             = psda_param;
+                loc_param.integration = SMLIB(Bs).param.integration;
+                loc_param.hazard      = SMLIB(Bs).param.hazard;
+                
+                switch  loc_param.integration
+                    case 'PC', [MRE,Cz] = runPCE(source,r0,IMslope,im,realSa,ellipsoid,h.param);
+                    case 'MC', [MRE,Cz] = runMCS(source,r0,IMslope,im,realSa,ellipsoid,h.param);
+                end
+                lambda = fun(Ts_param, ky_param,loc_param, im,MRE,Cz,source.NMmin); sptr = 1:size(lambda,1);
+                handles.lambdaCDM(sptr,site_ptr,:,source_ptr,model_ptr) = lambda;
+            end
+
             if integrator==6
-                im      = handles.haz2.imstandard;
-                [~,Cz]  = runPCE(source,r0,IMslope,im,realSa,ellipsoid,h.param);
-                deagg   = handles.haz2.deagg(site_ptr,:,:,source_ptr);
-                [M,dPm] = getMdPm(deagg);
-                lambda  = fun(Ts_param, ky_param, psda_param,im,M,dPm,Cz);
+                loc_param             = psda_param;
+                loc_param.integration = SMLIB(Bs).param.integration;
+                im       = handles.haz2.imstandard;
+                MRE      = runPCE(source,r0,IMslope,im,realSa,ellipsoid,h.param);
+                MRE      = permute(MRE,[1 3 2]);
+                Haz50    = prctile(MRE,50,2);
+                deagg    = handles.haz2.deagg(site_ptr,:,:,source_ptr);
+                [M,dPm]  = getMdPm(deagg);
+                
+                lambda   = fun(Ts_param, ky_param, loc_param,im,M,dPm,Haz50); sptr = 1:realD;
+                handles.lambdaCDM(sptr,site_ptr,:,source_ptr,model_ptr) = lambda;
             end
-            
-            handles.lambdaCDM(:,site_ptr,:,source_ptr,model_ptr) = lambda;
         end
         fprintf(spat,site_ptr,model_ptr,Nmodels,toc(ti))
     end

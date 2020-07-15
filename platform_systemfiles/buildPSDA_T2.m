@@ -2,9 +2,9 @@ function[T2]=buildPSDA_T2(paramPSDA,kyval,Tsval)
 
 nTs         = paramPSDA.Tssamples;
 nky         = paramPSDA.kysamples;
-[Ts,~,dPTs] = trlognpdf_psda([Tsval nTs]);
-[ky,~,dPky] = trlognpdf_psda([kyval nky]);
-[ind1,ind2] = meshgrid(1:max(nTs,1),1:max(nky,1));
+[Ts,dPTs]   = trlognpdf_psda([Tsval nTs]);
+[ky,dPky]   = trlognpdf_psda([kyval nky]);
+[ind1,ind2] = meshgrid(1:length(Ts),1:length(ky));
 ind1        = ind1(:);
 ind2        = ind2(:);
 Nparam      = length(ind1);

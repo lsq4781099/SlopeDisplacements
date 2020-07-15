@@ -1,33 +1,57 @@
-function[x,pdf,dP]=trlognpdf_psda(param)
+function[x,dP]=trlognpdf_psda(param,nX)
 
-x     = param(1);
-covx  = param(2);
-Nsta  = param(3);
+x    = param(1);
+covx = param(2);
+sig  = x*covx;
+pd   = trlogndist(x,covx);
 
-sig =(log(1+(covx)^2))^0.5;
-mu  =log(x)-0.5*sig^2;
-
-if all(param(2:3)>0)
-   
-   % truncated lognormal pdf
-   param = logninv([0.0005 0.9995],mu,sig);
-   
-   % log normal pdf
-   xo = logsp(param(1),param(2),Nsta+1)';
-   x  = 1/2*(xo(1:end-1)+xo(2:end));
-   pdf  = lognpdf(x,mu,sig);
-   
-   area = logncdf(xo(end),mu,sig)-logncdf(xo(1),mu,sig);
-   dP   = logncdf(xo(2:end),mu,sig)-logncdf(xo(1:end-1),mu,sig);
-   
-   % area correction
-   pdf = pdf / area;
-   dP  = dP/area;
-   
-else
-   x   = param(1);
-   pdf = 1;
-   dP  = 1;
+if numel(param)==3
+    Nsta = param(3);
+    if covx>0 && Nsta>=2
+        %% try 1
+        % constraints: mean(x) = x'*dP = mu, std(x) = sig, sum(dP)=1
+        % x-regularization
+        x  = (1:Nsta)';
+        b  = sig/std(x);
+        a  = param(1)-b*mean(x);
+        x  = a+b*x;
+        
+        % P-regularization
+        P  = pdf(pd,x);
+        on = ones(Nsta,1);
+        f  = x;
+        ab = [x'*P x'*f;on'*P on'*f]\[param(1);1];
+        dP = ab(1)*P+ab(2)*f;
+        
+    else
+        x   = param(1);
+        dP  = 1;
+    end
+else % random numers
+    if covx==0
+        a  = param(1);
+        x  = a*ones(1,nX);
+    else
+        x = random(pd,1,nX);
+        % regularization
+        b  = sig/std(x);
+        a  = param(1)-b*mean(x);
+        x  = a+b*x;
+    end
+    dP = ones(1,nX)/nX;
 end
-                                                         
-                                                                 
+
+function[pd]=trlogndist(x,covx)
+
+s  = x*covx;   % standard deviation
+v  = s^2;      % variance
+
+% https://www.mathworks.com/help/stats/lognormal-distribution.html
+mu    = log(x^2/sqrt(v+x^2));
+sigma = sqrt(log(v/x^2+1));
+pd    = makedist('lognormal',mu,sigma);
+
+
+
+
+

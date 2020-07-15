@@ -54,7 +54,8 @@ IMlist = [
 0	0	0	0	1	0	0	0	0	0	0      % Campbell,Bozorgnia 2011      
 0	0	0	0	1	1	0	0	0	0	0      % Campbell,Bozorgnia 2019      
 0	0	0	0	1	0	0	0	0	0	0      % Kramer & Mitchell, 2006  
-1	0	0	0	0	0	0	1	0	0	0];    % Median PCE BCHydro
+1	0	0	0	0	0	0	1	0	0	0      % Median PCE BCHydro
+1	0	0	0	0	0	0	1	0	0	0];    % Median PCE NGA
                                                                              
 mech = [
 1	1	0      % Youngs et al. 1997           
@@ -105,7 +106,8 @@ mech = [
 0	0	1      % Campbell,Bozorgnia 2011      
 0	0	1      % Campbell,Bozorgnia 2019      
 0	0	1      % Kramer & Mitchell, 2006 
-1	1	0];    % Median PCE BCHydro
+1	1	0      % Median PCE BCHydro
+0	0   1];    % Median PCE NGA
                                               
 
 %% Selection

@@ -16,23 +16,24 @@ gris      = [0.76 0.76 0.76];
 if haz.L0
     lambdaCDM2 = nansum(handles.lambdaCDM(:,site_ptr,:,:,model_ptr),4);
     lambdaCDM2 = permute(lambdaCDM2,[1 3 2]);
-    lambdaCDM2(lambdaCDM2<0)=nan;
-    notnan = true(size(lambdaCDM2,1),1);
+    ind        = all(lambdaCDM2'==0);
+    lambdaCDM2(ind,:)=[];
+    
+    if isempty(lambdaCDM2)
+        return
+    end
     
     if haz.L4
-        switch handles.paramPSDA.method
-            case 'PC', plot(handles.ax1,d,d*NaN,'color',gris,'DisplayName','PC simulations');
-            case 'MC', plot(handles.ax1,d,d*NaN,'color',gris,'DisplayName','MC simulations');
-        end
-        plot(handles.ax1,d,lambdaCDM2(notnan,:),'-','color',gris,'visible','on' ,'HandleVisibility','off');
+        plot(handles.ax1,d,d*NaN,'color',gris,'DisplayName','simulations');
+        plot(handles.ax1,d,lambdaCDM2,'-','color',gris,'visible','on' ,'HandleVisibility','off','linewidth',0.5);
     end
+    
     handles.ax1.ColorOrderIndex=1;
     % plot median
     yplot  = zeros(0,length(d));
     if haz.L1
-        lambdaCDM2(all(lambdaCDM2==0,2),:)=[];
         y = exp(nanmean(log(lambdaCDM2),1));
-        plot(handles.ax1,d,y,'linewidth',2,'DisplayName','Median');
+        plot(handles.ax1,d,y,'-','linewidth',2,'DisplayName','Median');
         yplot=[yplot;y];
     end
     
@@ -143,5 +144,9 @@ uimenu(c,'Label','Undock','Callback',           {@figure2clipboard_uimenu,handle
 uimenu(c,'Label','Undock & compare','Callback', {@figurecompare_uimenu,handles.ax1});
 set(handles.ax1,'uicontextmenu',c);
 format(cF);
+
+handles.ax1.Layer='top';
+handles.ax1.YLim=[1e-6 1e-1];
+
 
 

@@ -278,6 +278,7 @@ end
 [handles.REG_Display,handles.CDM_Display]   = defaultPSDA_plotoptions;
 handles.haz               = [];
 handles.haz2              = [];
+delete(findall(handles.ax1,'type','line'));
 handles.FIGpsda.Name      = 'Probabilistic Slope Displacement Analysis - PSDA';
 handles.tableREG.Data     = cell(0,4);
 handles.tableCDM.Data     = cell(0,7);

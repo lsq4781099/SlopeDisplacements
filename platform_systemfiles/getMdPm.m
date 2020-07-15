@@ -12,3 +12,4 @@ for ii=1:length(deagg)
     dpm = dpm/sum(dpm);
     dPm {ii} = dpm;
 end
+dPm = horzcat(dPm{:});

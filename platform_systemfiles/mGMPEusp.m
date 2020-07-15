@@ -189,6 +189,8 @@ switch fun
         [~,val(3)] = intersect({'strike-slip','normal','normal-oblique','reverse','reverse-oblique','unspecified'},usp{1});
     case 'medianPCE_bchydro'
         
+    case 'medianPCE_nga'
+        
 end
 
 
@@ -256,5 +258,6 @@ switch fun
     case 'KM06',                    param = [M,Rrup,usp];
         
     case 'medianPCE_bchydro',       param = [M,Rrup,media];
+    case 'medianPCE_nga',           param = [M,Rrup,media];        
     
 end

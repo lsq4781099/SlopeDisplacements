@@ -81,9 +81,7 @@ Option PSDA 1 - PSDA setup
 d         : logsp(0.1,100,20)  # cm
 realSa    : 30
 realD     : 40
-imhazard  : full
 rng       : shuffle
-method    : PC
 optimize  : on # optimize "on" uses the conditional term M|Sa in M-dependent CDMs
 kysamples : 0
 Tssamples : 0                                                                                                     

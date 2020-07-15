@@ -17,6 +17,7 @@ if any(ismember(imethod,[1 2]))
     haz.imstandard = handles.opt.im;
     haz.IMstandard = handles.opt.IM;
     [haz.lambda,haz.deagg]=runlogictree2(handles.sys,handles.opt,handles.h,handles.site_selection);
+    
 end
 
 if any(ismember(imethod,[3 4])) % Ellen´s rigid and flexible slopes
@@ -91,7 +92,7 @@ nSites = size(allTs,1);
 nTs    = handles.paramPSDA.Tssamples;
 T2     = zeros(max(nTs,1),nSites);
 for i=1:nSites
-    [T2(:,i),~,~]=trlognpdf_psda([allTs(i,:) nTs]);
+    T2(:,i)=trlognpdf_psda([allTs(i,:) nTs]);
 end
 Tnat = unique(T2(:));
 methods  = pshatoolbox_methods(5);
@@ -130,7 +131,7 @@ for i=1:NIM
         im(:,i)=im0(:,ind);
     else
         if IM(i)>=0
-            im(:,i)=logsp(0.001,3,Nim);
+            im(:,i)=logsp(0.00001,3,Nim);
         elseif IM(i)==-1
             im(:,i)=logsp(0.001,2,Nim);
         elseif IM(i)==-5

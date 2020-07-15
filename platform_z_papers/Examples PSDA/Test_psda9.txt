@@ -47,12 +47,10 @@ Option PSDA 1 - PSDA setup
 d         : logsp(1,200,50)  # cm
 realSa    : 30
 realD     : 40
-imhazard  : full
 rng       : shuffle
-method    : PC
 optimize  : on # optimize "on" uses the conditional term M|Sa in M-dependent CDMs
-kysamples : 0
-Tssamples : 0                                                                                                     
+kysamples : 1
+Tssamples : 1                                                                                                     
                                                                             
 Option PSDA 2 Library of Slope Displacement Models                                                                    
 D1  handle psda_BMT2017M
