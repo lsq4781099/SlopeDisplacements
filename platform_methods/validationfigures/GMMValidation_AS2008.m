@@ -2,20 +2,16 @@ function [handles]=GMMValidation_AS2008(handles,filename)
 
 switch filename
     case 'AS2008_1.png'
-        %1  2     3    4   5    6     7   8   9    10         11     12
-        %M, rrup, rjb, rx, dip, ztor, W, Z10, Vs30,mechanism, event, Vs30type
-        handles.e3.String = 30; %rjb
-        handles.e4.String = 30; %rx
-        handles.e6.String = 90; %dip
-        handles.e7.String = 10;
-        handles.e8.String = 270;
-        handles.e10.Value = 1; %{'strike-slip','normal','normal-oblique','reverse','reverse-oblique','thrust'};
-        handles.e11.Value = 2; %{'aftershock','mainshock','foreshock','swarms'};
-        handles.e12.Value = 1; % {'measured','inferred'};
-        handles.e1.String = 5; handles.e2.String = 30; handles.e5.String = 7; handles.e9.String = Z10_default_AS08_NGA(270); plotgmpe(handles);
-        handles.e1.String = 6; handles.e2.String = 30; handles.e5.String = 3; handles.e9.String = Z10_default_AS08_NGA(270); plotgmpe(handles);
-        handles.e1.String = 7; handles.e2.String = 30; handles.e5.String = 0; handles.e9.String = Z10_default_AS08_NGA(270); plotgmpe(handles);
-        handles.e1.String = 8; handles.e2.String = 30; handles.e5.String = 0; handles.e9.String = Z10_default_AS08_NGA(270); plotgmpe(handles);
+        T = [0.01, 0.02, 0.03, 0.04, 0.05,   0.075,  0.1, 0.15,  0.2, 0.25,  0.3,  0.4,  0.5, 0.75,    1,  1.5,    2,    3,    4,    5,  7.5,   10];
+        Z10 = Z10_default_AS08_NGA(270);
+        lny = zeros(4,length(T));
+        for i=1:length(T)
+            lny(1,i)=AS2008(T(i),5,30,30,30, 7,90,10,270,Z10,'strike-slip','mainshock','measured');
+            lny(2,i)=AS2008(T(i),6,30,30,30, 3,90,10,270,Z10,'strike-slip','mainshock','measured');
+            lny(3,i)=AS2008(T(i),7,30,30,30, 0,90,10,270,Z10,'strike-slip','mainshock','measured');
+            lny(4,i)=AS2008(T(i),8,30,30,30, 0,90,10,270,Z10,'strike-slip','mainshock','measured');
+        end
+        plot(handles.ax1,T,exp(lny),'-','linewidth',1)
         
         handles.ax1.XLim=[0.01  10];
         handles.ax1.YLim=[0.0001 1];
@@ -23,20 +19,16 @@ switch filename
         handles.ax1.YScale='log';
         
     case 'AS2008_2.png'
-        %1-M, 2-Vs30, 3-Rrup, 4-Rjb, 5-Rx, 6-dip, 7-Ztor, 8-Z10, 9-W, 10-mechanism, 11-eventtype, 12-side, 13-Vs30source
-        handles.e3.String = 30;
-        handles.e4.String = 30;
-        handles.e6.String = 90;
-        handles.e7.String = 10;
-        handles.e8.String = 550;
-        handles.e10.Value = 1; %{'strike-slip','normal','normal-oblique','reverse','reverse-oblique','thrust'};
-        handles.e11.Value = 2; %{'aftershock','mainshock','foreshock','swarms'};
-        handles.e12.Value = 1; %{'hangingwall','foot wall','other'};
-        handles.e13.Value = 1; % {'measured','inferred'};
-        handles.e1.String=5; handles.e2.String = 30; handles.e5.String = 7; handles.e9.String = Z10_default_AS08_NGA(550); plotgmpe(handles);
-        handles.e1.String=6; handles.e2.String = 30; handles.e5.String = 3; handles.e9.String = Z10_default_AS08_NGA(550); plotgmpe(handles);
-        handles.e1.String=7; handles.e2.String = 30; handles.e5.String = 0; handles.e9.String = Z10_default_AS08_NGA(550); plotgmpe(handles);
-        handles.e1.String=8; handles.e2.String = 30; handles.e5.String = 0; handles.e9.String = Z10_default_AS08_NGA(550); plotgmpe(handles);
+        T = [0.01, 0.02, 0.03, 0.04, 0.05,   0.075,  0.1, 0.15,  0.2, 0.25,  0.3,  0.4,  0.5, 0.75,    1,  1.5,    2,    3,    4,    5,  7.5,   10];
+        Z10 = Z10_default_AS08_NGA(550);
+        lny = zeros(4,length(T));
+        for i=1:length(T)
+            lny(1,i)=AS2008(T(i),5,30,30,30, 7,90,10,550,Z10,'strike-slip','mainshock','measured');
+            lny(2,i)=AS2008(T(i),6,30,30,30, 3,90,10,550,Z10,'strike-slip','mainshock','measured');
+            lny(3,i)=AS2008(T(i),7,30,30,30, 0,90,10,550,Z10,'strike-slip','mainshock','measured');
+            lny(4,i)=AS2008(T(i),8,30,30,30, 0,90,10,550,Z10,'strike-slip','mainshock','measured');
+        end
+        plot(handles.ax1,T,exp(lny),'-','linewidth',1)
         
         handles.ax1.XLim=[0.01  10];
         handles.ax1.YLim=[1e-5 1];
@@ -44,19 +36,16 @@ switch filename
         handles.ax1.YScale='log';
         
     case 'AS2008_3.png'
-        handles.e3.String = 30;
-        handles.e4.String = 30;
-        handles.e6.String = 90;
-        handles.e7.String = 10;
-        handles.e8.String = 760;
-        handles.e10.Value = 1; %{'strike-slip','normal','normal-oblique','reverse','reverse-oblique','thrust'};
-        handles.e11.Value = 2; %{'aftershock','mainshock','foreshock','swarms'};
-        handles.e12.Value = 1; %{'hangingwall','foot wall','other'};
-        handles.e13.Value = 1; % {'measured','inferred'};
-        handles.e1.String=5; handles.e2.String = 30; handles.e5.String = 7; handles.e9.String = Z10_default_AS08_NGA(760); plotgmpe(handles);
-        handles.e1.String=6; handles.e2.String = 30; handles.e5.String = 3; handles.e9.String = Z10_default_AS08_NGA(760); plotgmpe(handles);
-        handles.e1.String=7; handles.e2.String = 30; handles.e5.String = 0; handles.e9.String = Z10_default_AS08_NGA(760); plotgmpe(handles);
-        handles.e1.String=8; handles.e2.String = 30; handles.e5.String = 0; handles.e9.String = Z10_default_AS08_NGA(760); plotgmpe(handles);
+        T = [0.01, 0.02, 0.03, 0.04, 0.05,   0.075,  0.1, 0.15,  0.2, 0.25,  0.3,  0.4,  0.5, 0.75,    1,  1.5,    2,    3,    4,    5,  7.5,   10];
+        Z10 = Z10_default_AS08_NGA(760);
+        lny = zeros(4,length(T));
+        for i=1:length(T)
+            lny(1,i)=AS2008(T(i),5,30,30,30, 7,90,10,760,Z10,'strike-slip','mainshock','measured');
+            lny(2,i)=AS2008(T(i),6,30,30,30, 3,90,10,760,Z10,'strike-slip','mainshock','measured');
+            lny(3,i)=AS2008(T(i),7,30,30,30, 0,90,10,760,Z10,'strike-slip','mainshock','measured');
+            lny(4,i)=AS2008(T(i),8,30,30,30, 0,90,10,760,Z10,'strike-slip','mainshock','measured');
+        end
+        plot(handles.ax1,T,exp(lny),'-','linewidth',1)
         
         handles.ax1.XLim=[0.01  10];
         handles.ax1.YLim=[1e-5 1];
@@ -64,19 +53,16 @@ switch filename
         handles.ax1.YScale='log';
         
     case 'AS2008_4.png'
-        handles.e3.String = 1;
-        handles.e4.String = 1;
-        handles.e6.String = 90;
-        handles.e7.String = 15;
-        handles.e8.String = 270;
-        handles.e10.Value = 1; %{'strike-slip','normal','normal-oblique','reverse','reverse-oblique','thrust'};
-        handles.e11.Value = 2; %{'aftershock','mainshock','foreshock','swarms'};
-        handles.e12.Value = 1; %{'hangingwall','foot wall','other'};
-        handles.e13.Value = 1; % {'measured','inferred'};
-        handles.e1.String=5; handles.e2.String = 1; handles.e5.String = 7; handles.e9.String = Z10_default_AS08_NGA(270); plotgmpe(handles);
-        handles.e1.String=6; handles.e2.String = 1; handles.e5.String = 3; handles.e9.String = Z10_default_AS08_NGA(270); plotgmpe(handles);
-        handles.e1.String=7; handles.e2.String = 1; handles.e5.String = 0; handles.e9.String = Z10_default_AS08_NGA(270); plotgmpe(handles);
-        handles.e1.String=8; handles.e2.String = 1; handles.e5.String = 0; handles.e9.String = Z10_default_AS08_NGA(270); plotgmpe(handles);
+        T   = [0.01, 0.02, 0.03, 0.04, 0.05,   0.075,  0.1, 0.15,  0.2, 0.25,  0.3,  0.4,  0.5, 0.75,    1,  1.5,    2,    3,    4,    5,  7.5,   10];
+        Z10 = Z10_default_AS08_NGA(270);
+        lny = zeros(4,length(T));
+        for i=1:length(T)
+            lny(1,i)=AS2008(T(i),5,1,1,1, 7,90,15,270,Z10,'strike-slip','mainshock','measured');
+            lny(2,i)=AS2008(T(i),6,1,1,1, 3,90,15,270,Z10,'strike-slip','mainshock','measured');
+            lny(3,i)=AS2008(T(i),7,1,1,1, 0,90,15,270,Z10,'strike-slip','mainshock','measured');
+            lny(4,i)=AS2008(T(i),8,1,1,1, 0,90,15,270,Z10,'strike-slip','mainshock','measured');
+        end
+        plot(handles.ax1,T,exp(lny),'-','linewidth',1)
         
         handles.ax1.XLim=[0.01  10];
         handles.ax1.YLim=[1e-4 10];
@@ -84,25 +70,19 @@ switch filename
         handles.ax1.YScale='log';
         
     case 'AS2008_5.png'
-        %1-M, 2-Vs30, 3-Rrup, 4-Rjb, 5-Rx, 6-dip, 7-Ztor, 8-Z10, 9-W, 10-mechanism, 11-eventtype, 12-side, 13-Vs30source
-        
-        handles.e3.String = 1;
-        handles.e4.String = 1;
-        handles.e6.String = 90;
-        handles.e7.String = 15;
-        handles.e8.String = 550;
-        handles.e10.Value = 1; %{'strike-slip','normal','normal-oblique','reverse','reverse-oblique','thrust'};
-        handles.e11.Value = 2; %{'aftershock','mainshock','foreshock','swarms'};
-        handles.e12.Value = 1; %{'hangingwall','foot wall','other'};
-        handles.e13.Value = 1; % {'measured','inferred'};
-        handles.e1.String=5; handles.e2.String = 1; handles.e5.String = 7; handles.e9.String = Z10_default_AS08_NGA(550); plotgmpe(handles);
-        handles.e1.String=6; handles.e2.String = 1; handles.e5.String = 3; handles.e9.String = Z10_default_AS08_NGA(550); plotgmpe(handles);
-        handles.e1.String=7; handles.e2.String = 1; handles.e5.String = 0; handles.e9.String = Z10_default_AS08_NGA(550); plotgmpe(handles);
-        handles.e1.String=8; handles.e2.String = 1; handles.e5.String = 0; handles.e9.String = Z10_default_AS08_NGA(550); plotgmpe(handles);
+        T   = [0.01, 0.02, 0.03, 0.04, 0.05,   0.075,  0.1, 0.15,  0.2, 0.25,  0.3,  0.4,  0.5, 0.75,    1,  1.5,    2,    3,    4,    5,  7.5,   10];
+        Z10 = Z10_default_AS08_NGA(550);
+        lny = zeros(4,length(T));
+        for i=1:length(T)
+            lny(1,i)=AS2008(T(i),5,1,1,1, 7,90,15,550,Z10,'strike-slip','mainshock','measured');
+            lny(2,i)=AS2008(T(i),6,1,1,1, 3,90,15,550,Z10,'strike-slip','mainshock','measured');
+            lny(3,i)=AS2008(T(i),7,1,1,1, 0,90,15,550,Z10,'strike-slip','mainshock','measured');
+            lny(4,i)=AS2008(T(i),8,1,1,1, 0,90,15,550,Z10,'strike-slip','mainshock','measured');
+        end
+        plot(handles.ax1,T,exp(lny),'-','linewidth',1)
         
         handles.ax1.XLim=[0.01  10];
         handles.ax1.YLim=[1e-4 10];
         handles.ax1.XScale='log';
         handles.ax1.YScale='log';
-        
 end

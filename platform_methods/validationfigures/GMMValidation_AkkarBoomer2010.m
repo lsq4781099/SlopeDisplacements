@@ -3,12 +3,14 @@ function [handles]=GMMValidation_AkkarBoomer2010(handles,filename)
 
 switch filename
     case 'AkkarBoomer2010_1.png'
-        handles.e2.String = 10;  % Rjb
-        handles.e3.Value  = 1;   % rock
-        handles.e4.Value  = 1;   % strike-slip
-        handles.e1.String = 5.0; plotgmpe(handles,980.66);
-        handles.e1.String = 6.3; plotgmpe(handles,980.66);
-        handles.e1.String = 7.6; plotgmpe(handles,980.66);
+        T  = round([0.01 0.05:0.05:3]*100)/100;
+        lny = zeros(3,length(T));
+        for i=1:length(T)
+            lny(1,i)=AkkarBoomer2010(T(i),5.0,10,'rock','strike-slip');
+            lny(2,i)=AkkarBoomer2010(T(i),6.3,10,'rock','strike-slip');
+            lny(3,i)=AkkarBoomer2010(T(i),7.6,10,'rock','strike-slip');
+        end
+        plot(handles.ax1,T,exp(lny)*980.66,'linewidth',1);        
         
         handles.ax1.XLim   = [0 3];
         handles.ax1.YLim   = [0 625];
@@ -16,13 +18,15 @@ switch filename
         handles.ax1.YScale = 'linear';
         
     case 'AkkarBoomer2010_2.png'
-        handles.epsilon   = 1;   %
-        handles.e2.String = 10;  % Rjb
-        handles.e3.Value  = 1;   % rock
-        handles.e4.Value  = 1;   % strike-slip
-        handles.e1.String = 5.0; plotgmpe(handles,980.66);
-        handles.e1.String = 6.3; plotgmpe(handles,980.66);
-        handles.e1.String = 7.6; plotgmpe(handles,980.66);
+        T  = round([0.01 0.05:0.05:3]*100)/100;
+        lny = zeros(3,length(T));
+        sig = zeros(3,length(T));
+        for i=1:length(T)
+            [lny(1,i),sig(1,i)] = AkkarBoomer2010(T(i),5.0,10,'rock','strike-slip');
+            [lny(2,i),sig(2,i)] = AkkarBoomer2010(T(i),6.3,10,'rock','strike-slip');
+            [lny(3,i),sig(3,i)] = AkkarBoomer2010(T(i),7.6,10,'rock','strike-slip');
+        end
+        plot(handles.ax1,T,exp(lny+sig)*980.66,'linewidth',1);           
         
         handles.ax1.XLim   = [0 3];
         handles.ax1.YLim   = [0 1250];

@@ -16,7 +16,7 @@ switch filename
         mechanism = 'strike-slip'; M=5.5*on; lny(:,8) = KM06(T,M,Rrup,mechanism);
         mechanism = 'normal';      M=5.5*on; lny(:,9) = KM06(T,M,Rrup,mechanism);
         
-        plot(handles.ax1,Rrup,exp(lny)/100,'b-','linewidth',1,'tag','curves')
+        plot(handles.ax1,Rrup,exp(lny)/100,'linewidth',1,'tag','curves')
         handles.ax1.XLim=[1  1000];
         handles.ax1.YLim=[1e-1 1e2];
         handles.ax1.XScale='log';

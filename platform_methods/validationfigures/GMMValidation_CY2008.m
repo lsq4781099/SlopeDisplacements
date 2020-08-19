@@ -1,105 +1,85 @@
 function [handles]=GMMValidation_CY2008(handles,filename)
 
 switch filename
-    
     case 'CY2008_1.png'
-        %M, Rrup,    Rjb,   Rx, Ztor,    dip, lambda,   event, Vs30, Z10, FVS30
-        handles.e1.String=6.8;    % M
-        handles.e2.String=5;      % Rrup
-        handles.e3.String=0;      % Rjb
-        handles.e4.String=5;      % Rx
-        handles.e5.String=0;      % Ztor
-        handles.e6.String=60;     % dip
-        handles.e7.String=1100;   % Vs30
-        handles.e8.String=5.744229155; %Z1.0
-        handles.e9.Value=4;         % mechanism
-        handles.e10.Value=1;         % event
-        handles.e11.Value=2;        %FVS30
-        plotgmpe(handles);
+        T = [0.001 0.01	0.02	0.03	0.04	0.05	0.075   0.1	0.15	0.2	0.25	0.3	0.4	0.5	0.75 1.0 1.5 2.0 3.0 4.0 5.0 7.5 10.0];
+        lny = zeros(1,length(T));
+        for i=1:length(T)
+            lny(1,i)=CY2008(T(i),6.8,5,0,5,0,60,1100,5.744229155,'reverse','mainshock','inferred');
+        end
+        plot(handles.ax1,T,exp(lny),'-','linewidth',1)
         handles.ax1.XLim=[0.01  10];
         handles.ax1.YLim=[0.001 10];
         handles.ax1.XScale='log';
         handles.ax1.YScale='log';
         
     case 'CY2008_2.png'
-        %M, Rrup,    Rjb,   Rx, Ztor,    dip, lambda,   event, Vs30, Z10, FVS30
-        handles.e2.String=1;      % Rrup
-        handles.e3.String=0;      % Rjb
-        handles.e4.String=1;      % Rx
-        handles.e5.String=0;      % Ztor
-        handles.e6.String=90;     % dip
-        handles.e7.String=520;    % Vs30
-        handles.e8.String=exp(28.5-3.82/8*log(520^8+378.8^8)); %Z1.0
-        handles.e9.Value=1;         % mechanism
-        handles.e10.Value=1;         % event
-        handles.e11.Value=2;           %FVS30
-        handles.e1.String=5.5;   plotgmpe(handles);
-        handles.e1.String=6.5;   plotgmpe(handles);
-        handles.e1.String=7.5;   plotgmpe(handles);
-        handles.e1.String=8.5;   plotgmpe(handles);
+        T = [0.001 0.01	0.02	0.03	0.04	0.05	0.075   0.1	0.15	0.2	0.25	0.3	0.4	0.5	0.75 1.0 1.5 2.0 3.0 4.0 5.0 7.5 10.0];
+        lny = zeros(4,length(T));
+        Z10=exp(28.5-3.82/8*log(520^8+378.8^8));
+        for i=1:length(T)
+            lny(1,i)=CY2008(T(i),5.5,1,0,1,0,90,520,Z10,'strike-slip','mainshock','inferred');
+            lny(2,i)=CY2008(T(i),6.5,1,0,1,0,90,520,Z10,'strike-slip','mainshock','inferred');
+            lny(3,i)=CY2008(T(i),7.5,1,0,1,0,90,520,Z10,'strike-slip','mainshock','inferred');
+            lny(4,i)=CY2008(T(i),8.5,1,0,1,0,90,520,Z10,'strike-slip','mainshock','inferred');
+        end
+        plot(handles.ax1,T,exp(lny),'-','linewidth',1)
+        handles.ax1.XLim=[0.01  10];
+        handles.ax1.YLim=[0.001 10];
+        handles.ax1.XScale='log';
+        handles.ax1.YScale='log';
+        
+        
         handles.ax1.XLim=[0.01  10];
         handles.ax1.YLim=[0.0007 2];
         handles.ax1.XScale='log';
         handles.ax1.YScale='log';
         
     case 'CY2008_3.png'
-        %M, Rrup,    Rjb,   Rx, Ztor,    dip, lambda,   event, Vs30, Z10, FVS30
-        handles.e2.String=10;     % Rrup
-        handles.e3.String=0;      % Rjb
-        handles.e4.String=10;     % Rx
-        handles.e5.String=0;      % Ztor
-        handles.e6.String=90;     % dip
-        handles.e7.String=520;    % Vs30
-        handles.e8.String=exp(28.5-3.82/8*log(520^8+378.8^8)); %Z1.0
-        handles.e9.Value=1;       % mechanism
-        handles.e10.Value=1;      % event
-        handles.e11.Value=2;      %FVS30
-        handles.e1.String=5.5;   plotgmpe(handles);
-        handles.e1.String=6.5;   plotgmpe(handles);
-        handles.e1.String=7.5;   plotgmpe(handles);
-        handles.e1.String=8.5;   plotgmpe(handles);
+        T = [0.001 0.01	0.02	0.03	0.04	0.05	0.075   0.1	0.15	0.2	0.25	0.3	0.4	0.5	0.75 1.0 1.5 2.0 3.0 4.0 5.0 7.5 10.0];
+        lny = zeros(4,length(T));
+        Z10=exp(28.5-3.82/8*log(520^8+378.8^8));
+        for i=1:length(T)
+            lny(1,i)=CY2008(T(i),5.5,10,0,10,0,90,520,Z10,'strike-slip','mainshock','inferred');
+            lny(2,i)=CY2008(T(i),6.5,10,0,10,0,90,520,Z10,'strike-slip','mainshock','inferred');
+            lny(3,i)=CY2008(T(i),7.5,10,0,10,0,90,520,Z10,'strike-slip','mainshock','inferred');
+            lny(4,i)=CY2008(T(i),8.5,10,0,10,0,90,520,Z10,'strike-slip','mainshock','inferred');
+        end
+        plot(handles.ax1,T,exp(lny),'-','linewidth',1)
+        
         handles.ax1.XLim=[0.01  10];
         handles.ax1.YLim=[0.0007 2];
         handles.ax1.XScale='log';
         handles.ax1.YScale='log';
         
     case 'CY2008_4.png'
-        %M, Rrup,    Rjb,   Rx, Ztor,    dip, lambda,   event, Vs30, Z10, FVS30
-        handles.e2.String=30;     % Rrup
-        handles.e3.String=0;      % Rjb
-        handles.e4.String=30;     % Rx
-        handles.e5.String=0;      % Ztor
-        handles.e6.String=90;     % dip
-        handles.e7.String=520;    % Vs30
-        handles.e8.String=exp(28.5-3.82/8*log(520^8+378.8^8)); %Z1.0
-        handles.e9.Value=1;       % mechanism
-        handles.e10.Value=1;      % event
-        handles.e11.Value=2;      %FVS30
-        handles.e1.String=5.5;   plotgmpe(handles);
-        handles.e1.String=6.5;   plotgmpe(handles);
-        handles.e1.String=7.5;   plotgmpe(handles);
-        handles.e1.String=8.5;   plotgmpe(handles);
+        T = [0.001 0.01	0.02	0.03	0.04	0.05	0.075   0.1	0.15	0.2	0.25	0.3	0.4	0.5	0.75 1.0 1.5 2.0 3.0 4.0 5.0 7.5 10.0];
+        lny = zeros(4,length(T));
+        Z10=exp(28.5-3.82/8*log(520^8+378.8^8));
+        for i=1:length(T)
+            lny(1,i)=CY2008(T(i),5.5,30,0,30,0,90,520,Z10,'strike-slip','mainshock','inferred');
+            lny(2,i)=CY2008(T(i),6.5,30,0,30,0,90,520,Z10,'strike-slip','mainshock','inferred');
+            lny(3,i)=CY2008(T(i),7.5,30,0,30,0,90,520,Z10,'strike-slip','mainshock','inferred');
+            lny(4,i)=CY2008(T(i),8.5,30,0,30,0,90,520,Z10,'strike-slip','mainshock','inferred');
+        end
+        plot(handles.ax1,T,exp(lny),'-','linewidth',1)
+        
         handles.ax1.XLim=[0.01  10];
         handles.ax1.YLim=[0.0007 2];
         handles.ax1.XScale='log';
         handles.ax1.YScale='log';
         
     case 'CY2008_5.png'
-        %M, Rrup,    Rjb,   Rx, Ztor,    dip, lambda,   event, Vs30, Z10, FVS30
-        handles.e2.String=70;      % Rrup
-        handles.e3.String=0;      % Rjb
-        handles.e4.String=70;      % Rx
-        handles.e5.String=0;      % Ztor
-        handles.e6.String=90;     % dip
-        handles.e7.String=520;    % Vs30
-        handles.e8.String=num2str(exp(28.5-3.82/8*log(520^8+378.8^8))); %Z1.0
-        handles.e9.Value=1;         % mechanism
-        handles.e10.Value=1;         % event
-        handles.e11.Value=2;           %FVS30
-        handles.e1.String=5.5;   plotgmpe(handles);
-        handles.e1.String=6.5;   plotgmpe(handles);
-        handles.e1.String=7.5;   plotgmpe(handles);
-        handles.e1.String=8.5;   plotgmpe(handles);
+        T = [0.001 0.01	0.02	0.03	0.04	0.05	0.075   0.1	0.15	0.2	0.25	0.3	0.4	0.5	0.75 1.0 1.5 2.0 3.0 4.0 5.0 7.5 10.0];
+        lny = zeros(4,length(T));
+        Z10=exp(28.5-3.82/8*log(520^8+378.8^8));
+        for i=1:length(T)
+            lny(1,i)=CY2008(T(i),5.5,70,0,70,0,90,520,Z10,'strike-slip','mainshock','inferred');
+            lny(2,i)=CY2008(T(i),6.5,70,0,70,0,90,520,Z10,'strike-slip','mainshock','inferred');
+            lny(3,i)=CY2008(T(i),7.5,70,0,70,0,90,520,Z10,'strike-slip','mainshock','inferred');
+            lny(4,i)=CY2008(T(i),8.5,70,0,70,0,90,520,Z10,'strike-slip','mainshock','inferred');
+        end
+        plot(handles.ax1,T,exp(lny),'-','linewidth',1)
         handles.ax1.XLim=[0.01  10];
         handles.ax1.YLim=[0.0007 2];
         handles.ax1.XScale='log';

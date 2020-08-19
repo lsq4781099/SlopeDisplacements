@@ -14,7 +14,7 @@ switch filename
         lny(4,:) = Kanno2006(T,8.0,Rrup,Zhyp,300);
         
         PGA = exp(lny);
-        plot(handles.ax1,Rrup,PGA*980.66,'b-','linewidth',1,'tag','curves')
+        plot(handles.ax1,Rrup,PGA*980.66,'linewidth',1,'tag','curves')
         set(handles.ax1,'xscale','log','yscale','log','xlim',[1 300],'ylim',[1e-1 1e4])
         xlabel(handles.ax1,'Fault Distance (km)')
         ylabel(handles.ax1,'PGA (cm/s2)')
@@ -31,11 +31,10 @@ switch filename
         lny(4,:) = Kanno2006(T,8.0,Rrup,Zhyp,300);
         
         PGA = exp(lny);
-        plot(handles.ax1,Rrup,PGA,'b-','linewidth',1,'tag','curves')
+        plot(handles.ax1,Rrup,PGA,'linewidth',1,'tag','curves')
         set(handles.ax1,'xscale','log','yscale','log','xlim',[1 300],'ylim',[1e-1 1e4])
         xlabel(handles.ax1,'Fault Distance (km)')
         ylabel(handles.ax1,'PVA (cm/s)')
-        
         
     case 'Kanno2006_3.png'
         T    = 0; %PGA
@@ -49,7 +48,7 @@ switch filename
         lny(4,:) = Kanno2006(T,8.0,Rrup,Zhyp,300);
         
         PGA = exp(lny);
-        plot(handles.ax1,Rrup,PGA*980.66,'b-','linewidth',1,'tag','curves')
+        plot(handles.ax1,Rrup,PGA*980.66,'linewidth',1,'tag','curves')
         set(handles.ax1,'xscale','log','yscale','log','xlim',[10 300],'ylim',[1e-1 1e4])
         xlabel(handles.ax1,'Fault Distance (km)')
         ylabel(handles.ax1,'PGA (cm/s2)')
@@ -66,32 +65,36 @@ switch filename
         lny(4,:) = Kanno2006(T,8.0,Rrup,Zhyp,300);
         
         PGA = exp(lny);
-        plot(handles.ax1,Rrup,PGA,'b-','linewidth',1,'tag','curves')
+        plot(handles.ax1,Rrup,PGA,'linewidth',1,'tag','curves')
         set(handles.ax1,'xscale','log','yscale','log','xlim',[10 300],'ylim',[1e-1 1e4])
         xlabel(handles.ax1,'Fault Distance (km)')
         ylabel(handles.ax1,'PVA (cm/s)')
         
     case 'Kanno2006_5.png'
-        handles.e1.String=7;
-        handles.e4.String=300;
-        handles.e2.String=5;  handles.e3.String=5; plotgmpe(handles,980.66);
-        handles.e2.String=20; handles.e3.String=5; plotgmpe(handles,980.66);
-        handles.e2.String=40; handles.e3.String=5; plotgmpe(handles,980.66);
-        handles.e2.String=80; handles.e3.String=5; plotgmpe(handles,980.66);
-        
+        T   = [0.01 0.05 0.06 0.07 0.08 0.09 0.10 0.11 0.12 0.13 0.15 0.17 0.20 0.22 0.25 0.30 0.35 0.40 0.45 0.50 0.60 0.70 0.80 0.90 1.00 1.10 1.20 1.30 1.50 1.70 2.00 2.20 2.50 3.00 3.50 4.00 4.50 5.00];
+        lny = zeros(4,length(T));
+        for i=1:length(T)
+            lny(1,i)=Kanno2006(T(i),7,5,5,300);
+            lny(2,i)=Kanno2006(T(i),7,20,5,300);
+            lny(3,i)=Kanno2006(T(i),7,40,5,300);
+            lny(4,i)=Kanno2006(T(i),7,80,5,300);
+        end
+        plot(handles.ax1,T,exp(lny)*980.66,'linewidth',1);
         handles.ax1.XLim=[0.05  5];
         handles.ax1.YLim=[1e-1 1e4];
         handles.ax1.XScale='log';
         handles.ax1.YScale='log';
         
     case 'Kanno2006_6.png'
-        handles.e1.String=7;
-        handles.e4.String=300;
-        handles.e2.String=40;  handles.e3.String=50; plotgmpe(handles,980.66);
-        handles.e2.String=80;  handles.e3.String=50; plotgmpe(handles,980.66);
-        handles.e2.String=120; handles.e3.String=50; plotgmpe(handles,980.66);
-        handles.e2.String=200; handles.e3.String=50; plotgmpe(handles,980.66);
-        
+        T   = [0.01 0.05 0.06 0.07 0.08 0.09 0.10 0.11 0.12 0.13 0.15 0.17 0.20 0.22 0.25 0.30 0.35 0.40 0.45 0.50 0.60 0.70 0.80 0.90 1.00 1.10 1.20 1.30 1.50 1.70 2.00 2.20 2.50 3.00 3.50 4.00 4.50 5.00];
+        lny = zeros(4,length(T));
+        for i=1:length(T)
+            lny(1,i)=Kanno2006(T(i),7,40 ,50,300);
+            lny(2,i)=Kanno2006(T(i),7,80 ,50,300);
+            lny(3,i)=Kanno2006(T(i),7,120,50,300);
+            lny(4,i)=Kanno2006(T(i),7,200,50,300);
+        end
+        plot(handles.ax1,T,exp(lny)*980.66,'linewidth',1);
         handles.ax1.XLim=[0.05  5];
         handles.ax1.YLim=[1e-1 1e4];
         handles.ax1.XScale='log';

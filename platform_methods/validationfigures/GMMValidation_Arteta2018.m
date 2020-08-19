@@ -3,11 +3,13 @@ function [handles]=GMMValidation_Arteta2018(handles,filename)
 switch filename
     case 'Arteta2018_1.png'
         % Figure 10a from Abrahamson 2016
-        handles.e1.String=7.2;
-        handles.e2.String=120;
-        handles.e3.Value=1;
-        handles.epsilon = [-1 0 1];
-        plotgmpe(handles);
+        T=[0.01;0.02;0.05;0.075;0.1;0.15;0.2;0.25;0.3;0.4;0.5;0.6;0.75;1;1.5;2;2.5;3;4;5;6;7.5;10]';
+        lny = zeros(1,length(T));
+        sig = zeros(1,length(T));
+        for i=1:length(T)
+            [lny(1,i),sig(1,i)]=Arteta2018(T(i),7.2,120,'rock','forearc');
+        end
+        plot(handles.ax1,T,exp([lny;lny-sig;lny+sig]),'linewidth',1);
         handles.ax1.XLim=[0.01 10];
         handles.ax1.YLim=[0.0001 1];
         handles.ax1.XScale='log';
@@ -16,20 +18,22 @@ switch filename
         ylabel(handles.ax1,'Sa RotD50s [g]')
         
     case  'Arteta2018_2.png'
-        handles.e2.String=80;
-        handles.e3.Value=1;
-        handles.e1.String=5; plotgmpe(handles);
-        handles.e1.String=6; plotgmpe(handles);
-        handles.e1.String=7; plotgmpe(handles);
-        handles.e1.String=8; plotgmpe(handles);
-        
-        handles.ax1.ColorOrderIndex=1;
-        handles.e3.Value=2;
-        handles.e1.String=5; plotgmpe(handles);
-        handles.e1.String=6; plotgmpe(handles);
-        handles.e1.String=7; plotgmpe(handles);
-        handles.e1.String=8; plotgmpe(handles);
-        
+        T=[0.01;0.02;0.05;0.075;0.1;0.15;0.2;0.25;0.3;0.4;0.5;0.6;0.75;1;1.5;2;2.5;3;4;5;6;7.5;10]';
+        lny1 = zeros(4,length(T));
+        lny2 = zeros(4,length(T));
+        for i=1:length(T)
+            lny1(1,i)=Arteta2018(T(i),5,80,'rock','forearc');
+            lny1(2,i)=Arteta2018(T(i),6,80,'rock','forearc');
+            lny1(3,i)=Arteta2018(T(i),7,80,'rock','forearc');
+            lny1(4,i)=Arteta2018(T(i),8,80,'rock','forearc');
+            lny2(1,i)=Arteta2018(T(i),5,80,'soil','forearc');
+            lny2(2,i)=Arteta2018(T(i),6,80,'soil','forearc');
+            lny2(3,i)=Arteta2018(T(i),7,80,'soil','forearc');
+            lny2(4,i)=Arteta2018(T(i),8,80,'soil','forearc');            
+        end
+        plot(handles.ax1,T,exp(lny1),'linewidth',1); handles.ax1.ColorOrderIndex=1;
+        plot(handles.ax1,T,exp(lny2),'--','linewidth',1);
+
         handles.ax1.XLim=[0.01 10];
         handles.ax1.YLim=[0.00001 1];
         handles.ax1.XScale='log';
@@ -38,20 +42,22 @@ switch filename
         ylabel(handles.ax1,'Sa RotD50s [g]')
         
     case  'Arteta2018_3.png'
-        handles.e2.String=120;
-        handles.e3.Value=1;
-        handles.e1.String=5; plotgmpe(handles);
-        handles.e1.String=6; plotgmpe(handles);
-        handles.e1.String=7; plotgmpe(handles);
-        handles.e1.String=8; plotgmpe(handles);
-        
-        handles.ax1.ColorOrderIndex=1;
-        handles.e3.Value=2;
-        handles.e1.String=5; plotgmpe(handles);
-        handles.e1.String=6; plotgmpe(handles);
-        handles.e1.String=7; plotgmpe(handles);
-        handles.e1.String=8; plotgmpe(handles);
-        
+        T=[0.01;0.02;0.05;0.075;0.1;0.15;0.2;0.25;0.3;0.4;0.5;0.6;0.75;1;1.5;2;2.5;3;4;5;6;7.5;10]';
+        lny1 = zeros(4,length(T));
+        lny2 = zeros(4,length(T));
+        for i=1:length(T)
+            lny1(1,i)=Arteta2018(T(i),5,120,'rock','forearc');
+            lny1(2,i)=Arteta2018(T(i),6,120,'rock','forearc');
+            lny1(3,i)=Arteta2018(T(i),7,120,'rock','forearc');
+            lny1(4,i)=Arteta2018(T(i),8,120,'rock','forearc');
+            lny2(1,i)=Arteta2018(T(i),5,120,'soil','forearc');
+            lny2(2,i)=Arteta2018(T(i),6,120,'soil','forearc');
+            lny2(3,i)=Arteta2018(T(i),7,120,'soil','forearc');
+            lny2(4,i)=Arteta2018(T(i),8,120,'soil','forearc');            
+        end
+        plot(handles.ax1,T,exp(lny1),'linewidth',1); handles.ax1.ColorOrderIndex=1;
+        plot(handles.ax1,T,exp(lny2),'--','linewidth',1);
+
         handles.ax1.XLim=[0.01 10];
         handles.ax1.YLim=[0.00001 1];
         handles.ax1.XScale='log';
@@ -60,19 +66,21 @@ switch filename
         ylabel(handles.ax1,'Sa RotD50s [g]')
         
     case  'Arteta2018_4.png'
-        handles.e2.String=200;
-        handles.e3.Value=1;
-        handles.e1.String=5; plotgmpe(handles);
-        handles.e1.String=6; plotgmpe(handles);
-        handles.e1.String=7; plotgmpe(handles);
-        handles.e1.String=8; plotgmpe(handles);
-        
-        handles.ax1.ColorOrderIndex=1;
-        handles.e3.Value=2;
-        handles.e1.String=5; plotgmpe(handles);
-        handles.e1.String=6; plotgmpe(handles);
-        handles.e1.String=7; plotgmpe(handles);
-        handles.e1.String=8; plotgmpe(handles);
+        T=[0.01;0.02;0.05;0.075;0.1;0.15;0.2;0.25;0.3;0.4;0.5;0.6;0.75;1;1.5;2;2.5;3;4;5;6;7.5;10]';
+        lny1 = zeros(4,length(T));
+        lny2 = zeros(4,length(T));
+        for i=1:length(T)
+            lny1(1,i)=Arteta2018(T(i),5,200,'rock','forearc');
+            lny1(2,i)=Arteta2018(T(i),6,200,'rock','forearc');
+            lny1(3,i)=Arteta2018(T(i),7,200,'rock','forearc');
+            lny1(4,i)=Arteta2018(T(i),8,200,'rock','forearc');
+            lny2(1,i)=Arteta2018(T(i),5,200,'soil','forearc');
+            lny2(2,i)=Arteta2018(T(i),6,200,'soil','forearc');
+            lny2(3,i)=Arteta2018(T(i),7,200,'soil','forearc');
+            lny2(4,i)=Arteta2018(T(i),8,200,'soil','forearc');            
+        end
+        plot(handles.ax1,T,exp(lny1),'linewidth',1); handles.ax1.ColorOrderIndex=1;
+        plot(handles.ax1,T,exp(lny2),'--','linewidth',1);
         
         handles.ax1.XLim=[0.01 10];
         handles.ax1.YLim=[0.00001 1];
@@ -99,22 +107,23 @@ switch filename
         ylabel(handles.ax1,'PGA [g]')
         
     case 'Arteta2018_6.png'        
-        handles.e1.String=6;
-        handles.e3.Value=1;
+        T=[0.01;0.02;0.05;0.075;0.1;0.15;0.2;0.25;0.3;0.4;0.5;0.6;0.75;1;1.5;2;2.5;3;4;5;6;7.5;10]';
+        lny1 = zeros(4,length(T));
+        lny2 = zeros(4,length(T));
+        for i=1:length(T)
+            lny1(1,i)=Arteta2018(T(i),6,80 ,'rock','forearc');
+            lny1(2,i)=Arteta2018(T(i),6,160,'rock','forearc');
+            lny1(3,i)=Arteta2018(T(i),6,300,'rock','forearc');
+            lny1(4,i)=Arteta2018(T(i),6,500,'rock','forearc');
+            lny2(1,i)=Arteta2018(T(i),6,80 ,'rock','backarc');
+            lny2(2,i)=Arteta2018(T(i),6,160,'rock','backarc');
+            lny2(3,i)=Arteta2018(T(i),6,300,'rock','backarc');
+            lny2(4,i)=Arteta2018(T(i),6,500,'rock','backarc');            
+        end        
         
-        handles.e4.Value=1;
-        handles.e2.String=80;  plotgmpe(handles);
-        handles.e2.String=160; plotgmpe(handles);
-        handles.e2.String=300; plotgmpe(handles);
-        handles.e2.String=500; plotgmpe(handles);
-        
-        handles.ax1.ColorOrderIndex=1;
-        handles.e4.Value=2;
-        handles.e2.String=80;  plotgmpe(handles);
-        handles.e2.String=160; plotgmpe(handles);
-        handles.e2.String=300; plotgmpe(handles);
-        handles.e2.String=500; plotgmpe(handles);        
-        
+        plot(handles.ax1,T,exp(lny1),'linewidth',1); handles.ax1.ColorOrderIndex=1;
+        plot(handles.ax1,T,exp(lny2),'--','linewidth',1);        
+
         handles.ax1.XLim=[0.01 10];
         handles.ax1.YLim=[0.00001 1];
         handles.ax1.XScale='log';
@@ -139,7 +148,4 @@ switch filename
         handles.ax1.YScale='log';
         xlabel(handles.ax1,'Rhyp [km]')
         ylabel(handles.ax1,'PGA [g]')        
-        
-        
-        
 end

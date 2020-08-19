@@ -7,17 +7,17 @@ switch filename
         Rrup = logsp(1,200,100);
         on = ones(1,100);
         lny       = zeros(9,100);
-        SOF = 'strike-slip'; media = 'sgs-b'; M=7.5*on; lny(1,:) = TBA03(T,M,Rrup,media, SOF);
-        SOF = 'strike-slip'; media = 'sgs-c'; M=7.5*on; lny(2,:) = TBA03(T,M,Rrup,media, SOF);
-        SOF = 'strike-slip'; media = 'sgs-d'; M=7.5*on; lny(3,:) = TBA03(T,M,Rrup,media, SOF);
-        SOF = 'strike-slip'; media = 'sgs-b'; M=6.5*on; lny(4,:) = TBA03(T,M,Rrup,media, SOF);
-        SOF = 'strike-slip'; media = 'sgs-c'; M=6.5*on; lny(5,:) = TBA03(T,M,Rrup,media, SOF);
-        SOF = 'strike-slip'; media = 'sgs-d'; M=6.5*on; lny(6,:) = TBA03(T,M,Rrup,media, SOF);
-        SOF = 'strike-slip'; media = 'sgs-b'; M=5.5*on; lny(7,:) = TBA03(T,M,Rrup,media, SOF);
-        SOF = 'strike-slip'; media = 'sgs-c'; M=5.5*on; lny(8,:) = TBA03(T,M,Rrup,media, SOF);
-        SOF = 'strike-slip'; media = 'sgs-d'; M=5.5*on; lny(9,:) = TBA03(T,M,Rrup,media, SOF);
+        SOF = 'strike-slip'; media = 'b'; M=7.5*on; lny(1,:) = TBA03(T,M,Rrup,media, SOF);
+        SOF = 'strike-slip'; media = 'c'; M=7.5*on; lny(2,:) = TBA03(T,M,Rrup,media, SOF);
+        SOF = 'strike-slip'; media = 'd'; M=7.5*on; lny(3,:) = TBA03(T,M,Rrup,media, SOF);
+        SOF = 'strike-slip'; media = 'b'; M=6.5*on; lny(4,:) = TBA03(T,M,Rrup,media, SOF);
+        SOF = 'strike-slip'; media = 'c'; M=6.5*on; lny(5,:) = TBA03(T,M,Rrup,media, SOF);
+        SOF = 'strike-slip'; media = 'd'; M=6.5*on; lny(6,:) = TBA03(T,M,Rrup,media, SOF);
+        SOF = 'strike-slip'; media = 'b'; M=5.5*on; lny(7,:) = TBA03(T,M,Rrup,media, SOF);
+        SOF = 'strike-slip'; media = 'c'; M=5.5*on; lny(8,:) = TBA03(T,M,Rrup,media, SOF);
+        SOF = 'strike-slip'; media = 'd'; M=5.5*on; lny(9,:) = TBA03(T,M,Rrup,media, SOF);
         AI = exp(lny);
-        plot(handles.ax1,Rrup,AI/100,'b-','linewidth',1,'tag','curves')
+        plot(handles.ax1,Rrup,AI/100,'linewidth',1,'tag','curves')
         set(handles.ax1,'xscale','log','yscale','log','xlim',[1 1000],'ylim',[1e-3 1e1])
         xlabel(handles.ax1,'Rrup (km)')
         ylabel(handles.ax1,'AI (m/s)')
@@ -27,17 +27,17 @@ switch filename
         Rrup = logsp(1,200,100);
         on = ones(1,100);
         lny       = zeros(9,100);
-        SOF = 'reverse';     media = 'sgs-d'; M=7.5*on; lny(1,:) = TBA03(T,M,Rrup,media, SOF);
-        SOF = 'strike-slip'; media = 'sgs-d'; M=7.5*on; lny(2,:) = TBA03(T,M,Rrup,media, SOF);
-        SOF = 'normal';      media = 'sgs-d'; M=7.5*on; lny(3,:) = TBA03(T,M,Rrup,media, SOF);
-        SOF = 'reverse';     media = 'sgs-d'; M=6.5*on; lny(4,:) = TBA03(T,M,Rrup,media, SOF);
-        SOF = 'strike-slip'; media = 'sgs-d'; M=6.5*on; lny(5,:) = TBA03(T,M,Rrup,media, SOF);
-        SOF = 'normal';      media = 'sgs-d'; M=6.5*on; lny(6,:) = TBA03(T,M,Rrup,media, SOF);
-        SOF = 'reverse';     media = 'sgs-d'; M=5.5*on; lny(7,:) = TBA03(T,M,Rrup,media, SOF);
-        SOF = 'strike-slip'; media = 'sgs-d'; M=5.5*on; lny(8,:) = TBA03(T,M,Rrup,media, SOF);
-        SOF = 'normal';      media = 'sgs-d'; M=5.5*on; lny(9,:) = TBA03(T,M,Rrup,media, SOF);
+        SOF = 'reverse';     media = 'd'; M=7.5*on; lny(1,:) = TBA03(T,M,Rrup,media, SOF);
+        SOF = 'strike-slip'; media = 'd'; M=7.5*on; lny(2,:) = TBA03(T,M,Rrup,media, SOF);
+        SOF = 'normal';      media = 'd'; M=7.5*on; lny(3,:) = TBA03(T,M,Rrup,media, SOF);
+        SOF = 'reverse';     media = 'd'; M=6.5*on; lny(4,:) = TBA03(T,M,Rrup,media, SOF);
+        SOF = 'strike-slip'; media = 'd'; M=6.5*on; lny(5,:) = TBA03(T,M,Rrup,media, SOF);
+        SOF = 'normal';      media = 'd'; M=6.5*on; lny(6,:) = TBA03(T,M,Rrup,media, SOF);
+        SOF = 'reverse';     media = 'd'; M=5.5*on; lny(7,:) = TBA03(T,M,Rrup,media, SOF);
+        SOF = 'strike-slip'; media = 'd'; M=5.5*on; lny(8,:) = TBA03(T,M,Rrup,media, SOF);
+        SOF = 'normal';      media = 'd'; M=5.5*on; lny(9,:) = TBA03(T,M,Rrup,media, SOF);
         AI = exp(lny);
-        plot(handles.ax1,Rrup,AI/100,'b-','linewidth',1,'tag','curves')
+        plot(handles.ax1,Rrup,AI/100,'linewidth',1,'tag','curves')
         set(handles.ax1,'xscale','log','yscale','log','xlim',[1 1000],'ylim',[1e-3 1e1])
         xlabel(handles.ax1,'Rrup (km)')
         ylabel(handles.ax1,'AI (m/s)')
