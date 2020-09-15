@@ -17,16 +17,16 @@ end
 
 function LIBS_OpeningFcn(hObject, eventdata, handles, varargin) %#ok<*INUSL>
 
-load libsbuttons c1 c2 c3 c4 c5 c6 c7 c8 c9
-handles.CDataOpen                 = c1;
-handles.CDataClosed               = c2;
-handles.toggle1.CData             = c3;
-handles.runREG.CData              = c4;
-handles.ax2Limits.CData           = c5;
-handles.REG_DisplayOptions.CData  = c6;
-handles.treebutton.CData          = c7;
-handles.deleteButton.CData        = c8;
-handles.undock.CData              = c9;
+load icons_LIBS.mat c
+handles.deleteButton.CData        = c{5};
+handles.CDataOpen                 = c{5};
+handles.CDataClosed               = c{6};
+handles.toggle1.CData             = c{3};
+handles.runREG.CData              = c{7};
+handles.ax2Limits.CData           = c{4};
+handles.REG_DisplayOptions.CData  = c{2};
+handles.treebutton.CData          = c{8};
+handles.undock.CData              = c{9};
 xlabel(handles.ax1,'Settlement (mm)','fontsize',10)
 ylabel(handles.ax1,'Mean Rate of Exceedance','fontsize',10)
 

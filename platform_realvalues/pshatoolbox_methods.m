@@ -49,6 +49,7 @@ if group ==1
     i=i+1; ME(i).label = 'ASK 2014';                     ME(i).func = @ASK2014;                    ME(i).mech=[0 0 1]; ME(i).type='regular';  ME(i).ref='https://doi.org/10.1193/070913eqs198m';
     i=i+1; ME(i).label = 'Akkar & Boomer 2007';          ME(i).func = @AkkarBoomer2007;            ME(i).mech=[0 0 1]; ME(i).type='regular';  ME(i).ref='https://doi.org/10.1002/eqe.679';
     i=i+1; ME(i).label = 'Akkar & Boomer 2010';          ME(i).func = @AkkarBoomer2010;            ME(i).mech=[0 0 1]; ME(i).type='regular';  ME(i).ref='https://doi.org/10.1785/gssrl.81.2.195';
+    i=i+1; ME(i).label = 'Akkar et al. 2014';            ME(i).func = @Akkar2014;                  ME(i).mech=[0 0 1]; ME(i).type='regular';  ME(i).ref='https://doi.org/10.1007/s10518-013-9461-4';
     i=i+1; ME(i).label = 'Arroyo et al. 2010';           ME(i).func = @Arroyo2010;                 ME(i).mech=[1 0 0]; ME(i).type='regular';  ME(i).ref='https://doi.org/10.1007/s10950-010-9200-0';
     i=i+1; ME(i).label = 'Bindi et al. 2011';            ME(i).func = @Bindi2011;                  ME(i).mech=[0 0 1]; ME(i).type='regular';  ME(i).ref='https://doi.org/10.1007/s10518-011-9313-z';
     i=i+1; ME(i).label = 'Kanno et al. 2006';            ME(i).func = @Kanno2006;                  ME(i).mech=[1 1 0]; ME(i).type='regular';  ME(i).ref='http://dx.doi.org/10.1785/0120050138';

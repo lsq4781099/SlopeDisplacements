@@ -35,7 +35,7 @@ MREPCE  = cell(1,Nbranch);
 if license('test','Distrib_Computing_Toolbox')
     for i=sys.isREG
         if weights(i)~=0
-            fprintf('%i %i %i %i\n',branch(i,:));
+            %fprintf('%i %i %i %i\n',branch(i,:));
             sources = buildmodelin(sys,branch(i,:),opt);
             MRE(:,:,:,:,i) = runhazard1(im,IM,h,opt,sources,Nsource,sitelist);
         end

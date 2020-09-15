@@ -18,11 +18,11 @@ end
 
 function SettleTiltExplorer_OpeningFcn(hObject, eventdata, handles, varargin) %#ok<*INUSL>
 handles.output = hObject;
-load All_Scenario_Buttons DiscretizeMButtonbutton
-handles.DiscretizeMButtonbutton.CData = DiscretizeMButtonbutton;
-handles.undock1.CData = double(imread('Undock.jpg'))/255;
-handles.undock2.CData = double(imread('Undock.jpg'))/255;
-handles.Book.CData = double(imread('book_open.jpg'))/255;
+load icons_SettleTiltExplorer.mat c
+handles.DiscretizeMButtonbutton.CData = c{1};
+handles.Book.CData    = c{2};
+handles.undock1.CData = c{3};
+handles.undock2.CData = c{3};
 
 methods = pshatoolbox_methods(6);
 handles.func = {methods.func};
@@ -142,7 +142,7 @@ param.th1=str2double(handles.th1.String);
 param.th2=str2double(handles.th2.String);
 param.N1=str2double(handles.N1.String);
 param.N2=str2double(handles.N2.String);
-param.meth=handles.meth.String{handles.meth.Value};
+param.meth='SPT';%handles.meth.String{handles.meth.Value};
 param.N160=cell2mat(handles.table1.Data(:,1));
 param.qc1N=cell2mat(handles.table1.Data(:,1));
 param.thick=cell2mat(handles.table1.Data(:,2));
@@ -211,14 +211,14 @@ Leg.Location = 'NorthWest';
 c2 = uicontextmenu;
 uimenu(c2,'Label','Copy data','Callback'  ,{@data2clipboard_uimenu,num2cell([cav0(:),exp([lny0-sig0;lny0;lny0+sig0])'])});
 set(handles.ax1,'uicontextmenu',c2);
-
+% 
 delete(findall(handles.ax2,'tag','curves'))
 handles.ax2.ColorOrderIndex=1;
 plot(handles.ax2,s,Y,'tag','curves','HandleVisibility','off')
 
-c2 = uicontextmenu;
-uimenu(c2,'Label','Copy data','Callback'  ,{@data2clipboard_uimenu,num2cell([s(:),Y(:)])});
-set(handles.ax2,'uicontextmenu',c2);
+c3 = uicontextmenu;
+uimenu(c3,'Label','Copy data','Callback'  ,{@data2clipboard_uimenu,num2cell([s(:),Y(:)])});
+set(handles.ax2,'uicontextmenu',c3);
 
 % ---------------------- building properties ------------------------------
 

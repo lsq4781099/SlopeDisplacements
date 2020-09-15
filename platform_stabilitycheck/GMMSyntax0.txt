@@ -18,7 +18,7 @@ Clusters     : off 100 1
 
 Option 1 - Logic Tree Weights
 Geom Weight : 1
-Gmpe Weight : ones(1,48)/48
+Gmpe Weight : ones(1,52)/52
 Mscl Weight : 1 
 
 Option 2 - Source Geometry
@@ -66,6 +66,7 @@ gmm  gmm_BSSA2014                BSSA2014 2 strike-slip global                  
 gmm  gmm_ASK2014                 ASK2014 unk strike-slip mainshock  measured global              #ASK 2014 - NGAW2             
 gmm  gmm_AkkarBoomer2007         AkkarBoomer2007 stiff normal 5                                  #Akkar & Boomer 2007          
 gmm  gmm_AkkarBoomer2010         AkkarBoomer2010 rock normal                                     #Akkar & Boomer 2010          
+gmm  gmm_Akkar2014               Akkar2014 strike-slip rjb                                       #Akkar & Boomer 2010          
 gmm  gmm_Arroyo2010              Arroyo2010                                                      #Arroyo et al. 2010           
 gmm  gmm_Bindi2011               Bindi2011 normal geoh                                           #Bindi et al. 2011            
 gmm  gmm_Kanno2006               Kanno2006                                                       #Kanno et al. 2006            
@@ -80,54 +81,59 @@ gmm  gmm_CB19                    CB19 0.607 strike-slip global                  
 gmm  gmm_KM06                    KM06 strike-slip                                                #Kramer & Mitchell, 2006      
 
 Option 4 - GMPE GROUPS                                                                                                        
-gmmgroup   gmm_Youngs1997              1
-gmmgroup   gmm_AtkinsonBoore2003       2
-gmmgroup   gmm_Zhao2006                3
-gmmgroup   gmm_Mcverry2006             4
-gmmgroup   gmm_ContrerasBoroschek2012  5
-gmmgroup   gmm_BCHydro2012             6
-gmmgroup   gmm_BCHydro2018             7
-gmmgroup   gmm_Kuehn2020               8
-gmmgroup   gmm_Arteta2018              9
-gmmgroup   gmm_Idini2016              10
-gmmgroup   gmm_MontalvaBastias2017    11
-gmmgroup   gmm_MontalvaBastias2017HQ  12
-gmmgroup   gmm_Montalva2018           13
-gmmgroup   gmm_SiberRisk2019          14
-gmmgroup   gmm_Garcia2005             15
-gmmgroup   gmm_Jaimes2006             16
-gmmgroup   gmm_Jaimes2015             17
-gmmgroup   gmm_Jaimes2016             18
-gmmgroup   gmm_GarciaJaimes2017       19
-gmmgroup   gmm_GarciaJaimes2017VH     20
-gmmgroup   gmm_GA2011                 21
-gmmgroup   gmm_Bernal2014             22
-gmmgroup   gmm_Sadigh1997             23
-gmmgroup   gmm_I2008                  24
-gmmgroup   gmm_CY2008                 25
-gmmgroup   gmm_BA2008                 26
-gmmgroup   gmm_CB2008                 27
-gmmgroup   gmm_AS2008                 28
-gmmgroup   gmm_AS1997h                29
-gmmgroup   gmm_I2014                  30
-gmmgroup   gmm_CY2014                 31
-gmmgroup   gmm_CB2014                 32
-gmmgroup   gmm_BSSA2014               33
-gmmgroup   gmm_ASK2014                34
-gmmgroup   gmm_AkkarBoomer2007        35
-gmmgroup   gmm_AkkarBoomer2010        36
-gmmgroup   gmm_Arroyo2010             37
-gmmgroup   gmm_Bindi2011              38
-gmmgroup   gmm_Kanno2006              39
-gmmgroup   gmm_Cauzzi2015             40
-gmmgroup   gmm_DW12                   41
-gmmgroup   gmm_FG15                   42
-gmmgroup   gmm_TBA03                  43
-gmmgroup   gmm_BU17                   44
-gmmgroup   gmm_CB10                   45
-gmmgroup   gmm_CB11                   46
-gmmgroup   gmm_CB19                   47
-gmmgroup   gmm_KM06                   48
+gmmgroup  gmm_Youngs1997                     1 
+gmmgroup  gmm_AtkinsonBoore2003              2 
+gmmgroup  gmm_Zhao2006                       3 
+gmmgroup  gmm_Mcverry2006                    4 
+gmmgroup  gmm_ContrerasBoroschek2012         5 
+gmmgroup  gmm_BCHydro2012                    6 
+gmmgroup  gmm_BCHydro2018                    7 
+gmmgroup  gmm_Kuehn2020                      8 
+gmmgroup  gmm_Parker2020                     9 
+gmmgroup  gmm_Arteta2018                    10 
+gmmgroup  gmm_Idini2016                     11 
+gmmgroup  gmm_MontalvaBastias2017           12 
+gmmgroup  gmm_MontalvaBastias2017HQ         13 
+gmmgroup  gmm_Montalva2018                  14 
+gmmgroup  gmm_SiberRisk2019                 15 
+gmmgroup  gmm_Garcia2005                    16 
+gmmgroup  gmm_Jaimes2006                    17 
+gmmgroup  gmm_Jaimes2015                    18 
+gmmgroup  gmm_Jaimes2016                    19 
+gmmgroup  gmm_GarciaJaimes2017              20 
+gmmgroup  gmm_GarciaJaimes2017VH            21 
+gmmgroup  gmm_GA2011                        22 
+gmmgroup  gmm_SBSA2016                      23 
+gmmgroup  gmm_GKAS2017                      24 
+gmmgroup  gmm_Bernal2014                    25 
+gmmgroup  gmm_Sadigh1997                    26 
+gmmgroup  gmm_I2008                         27 
+gmmgroup  gmm_CY2008                        28 
+gmmgroup  gmm_BA2008                        29 
+gmmgroup  gmm_CB2008                        30 
+gmmgroup  gmm_AS2008                        31 
+gmmgroup  gmm_AS1997h                       32 
+gmmgroup  gmm_I2014                         33 
+gmmgroup  gmm_CY2014                        34 
+gmmgroup  gmm_CB2014                        35 
+gmmgroup  gmm_BSSA2014                      36 
+gmmgroup  gmm_ASK2014                       37 
+gmmgroup  gmm_AkkarBoomer2007               38 
+gmmgroup  gmm_AkkarBoomer2010               39 
+gmmgroup  gmm_Akkar2014                     40 
+gmmgroup  gmm_Arroyo2010                    41 
+gmmgroup  gmm_Bindi2011                     42 
+gmmgroup  gmm_Kanno2006                     43 
+gmmgroup  gmm_Cauzzi2015                    44 
+gmmgroup  gmm_DW12                          45 
+gmmgroup  gmm_FG15                          46 
+gmmgroup  gmm_TBA03                         47 
+gmmgroup  gmm_BU17                          48 
+gmmgroup  gmm_CB10                          49 
+gmmgroup  gmm_CB11                          50 
+gmmgroup  gmm_CB19                          51 
+gmmgroup  gmm_KM06                          52 
+
 
 Option 5 - MAGNITUDE SCALING RELATIONS
 seismicity 1
@@ -141,4 +147,4 @@ site2 -65.04497  0.00000 0.0000   VS30 760  f0 1
 
 Option 7 - Spacial distributed data
 layer VS30 760
-layer f0 760
+layer f0 1
